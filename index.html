@@ -139,7 +139,6 @@ function upgradeProb(){
 function reqPatentTickets(){
  return 1+((state&&state.patentRegCount)||0);
 }
-// 특수 히로인 판별 (2: 유하은, 9: 제니퍼 — 기혼 상태에서도 청혼 가능 & 현재 와이프 가출)
 const isSpecialWife=id=>(id===2||id===9);
 // ===== 10인의 인연 =====
 const W=[
@@ -211,7 +210,7 @@ const _pos={};SC.forEach(s=>{
  else{s.reqEdu=[0,0,25,50,75,100,125,150][s.idx]||0}
 });
 const lvOf=r=>[1,3,6,10,15].filter(t=>r>=t).length;
-// ===== 🏬 백화점 명품 60선 =====
+// ===== 🏬 백화점 명품 60선(실제 100선) & 각 선물별 선호 인물 매핑 =====
 const DG=[['👜','가방·잡화'],['⌚','시계·주얼리'],['👗','패션'],['💄','뷰티·향수'],['🍷','미식·주류'],['🏠','리빙·인테리어'],['🧥','남성 패션'],['🕰️','남성 시계·소품'],['⛳','남성 골프·레저'],['🥃','남성 시가·바']],GG=['f','f','f','f','u','u','m','m','m','m'],DEPT=[];
 ['👜|에르메스 버킨:4000,🛍️|샤넬 플랩백:2200,👝|디올 레이디 클러치:600,🎀|프라다 리나일론 백:200,👛|구찌 재키 숄더백:350,🧺|보테가 카세트 백:500,🕶️|톰포드 선글라스:90,🧣|생로랑 실크 스카프:80,🪪|고야드 카드지갑:90,🎒|루이비통 알마 백:420',
 '💎|티파니 다이아 목걸이:3000,💍|해리윈스턴 다이아 반지:30000,📿|불가리 세르펜티 팔찌:1500,🕐|까르띠에 탱크 여성 워치:1200,🌸|반클리프 알함브라 목걸이:1000,👑|쇼메 티아라:8000,💠|쇼파드 해피다이아몬드:900,🔮|모브쎄 사파이어 귀걸이:500,🦋|피아제 포제션 링:700,✨|다미아니 벨에포크 브레이슬릿:650',
@@ -224,27 +223,37 @@ const DG=[['👜','가방·잡화'],['⌚','시계·주얼리'],['👗','패션'
 '⛳|타이틀리스트 골프 풀세트:500,🏌️|프리미엄 캐디백:200,🎣|시마노 낚시 세트:300,🚴|피나렐로 로드바이크:1200,🛶|요트 클럽 멤버십:5000,🎧|B&W 헤드폰:150,😎|레이밴 파일럿 선글라스:40,🏎️|페라리 모형 컬렉션:60,🎿|프리미엄 스키 장비:350,🎾|윔블던 한정 라켓:70',
 '🚬|코히바 시가 세트:150,🥃|발렌타인 30년:120,🍸|바카라 칵테일 바 세트:80,🧰|시가 휴미더 상자:300,🥂|리델 크리스탈 잔:70,🃏|프리미엄 포커 세트:60,♟️|대리석 체스 세트:150,📚|초판본 고서 컬렉션:500,🎼|하이엔드 LP 턴테이블:200,🍺|벨기에 수도원 맥주:30'
 ].forEach((str,g)=>str.split(',').forEach(x=>{const[a,b]=x.split('|'),[n,p]=b.split(':');DEPT.push({id:DEPT.length,g,ic:a,n,p:p*1e4})}));
-const PREF=[[0,3],[1,5],[5,3],[2,5],[1,2],[1,0],[5,4],[4,3],[3,5],[1,4]];
-const VIPS=[['🎩','박 회장 (재계 원로)',[7,9]],['🏛️','정 의원 (정계)',[6,8]],['🏦','김 은행장 (금융계)',[6,7]],['📊','최 대표 (투자계)',[8,9]]];
+const PREF=[[0,3],[1,5],[5,3],[2,5],[1,2],[1,0],[5,4],[4,3],[3,5],[1,4]]; // 히로인별 선호 선물 분야
+const VIPS=[['🎩','박 회장 (재계 원로)',[7,9]],['🏛️','정 의원 (정계)',[6,8]],['🏦','김 은행장 (금융계)',[6,7]],['📊','최 대표 (투자계)',[8,9]]]; // 거래처 VIP 취향
+// 각 백화점 코너(g)별로 선호하는 인물 목록을 반환하는 헬퍼 함수
+function whoLikesG(g){
+ const res=[];
+ PREF.forEach((pf,hi)=>{if(pf.includes(g))res.push({ic:W[hi][0],name:W[hi][1].split(' ')[0],full:W[hi][1],isVip:false,id:hi})});
+ VIPS.forEach((vp,vi)=>{if(vp[2].includes(g))res.push({ic:vp[0],name:vp[1].split(' (')[0],full:vp[1],isVip:true,id:vi})});
+ return res;
+}
+function whoLikesShort(g,withIcon=true){
+ return whoLikesG(g).map(x=>(withIcon?x.ic:'')+x.name).join('·');
+}
 const SL={tech:'기술',biz:'사업',art:'예술',net:'인맥',stress:'🔥'};
 const tag=s=>s.cost?'-'+won(s.cost):s.gain?'+'+won(s.gain):'무료';
 const sub=s=>Object.entries(s.st).map(([k,v])=>SL[k]+(v>0?'+':'')+v).join(' ')+(s.pas?` 💰+${won(s.pas)}`:'')+(s.ticket?` 🎫+${s.ticket}`:'');
-// ===== 상점 / 엔딩 (히든 엔딩 10번 추가) =====
+// ===== 상점 / 엔딩 =====
 const SHOP=[['cello','🎻','수제 마스터피스 첼로',45e5,'작곡 스트레스 회복 +35%'],['ai_pc','🖥️','Mac Studio 로컬LLM 서버',12e6,'기술력 획득 +30%'],['espresso','☕','황금 에스프레소 머신',25e5,'스트레스 증가량 -25%'],
 ['patent_wall','📜','글로벌 특허증서 컬렉션',25e6,'분기 자동수익 +200만',2e6],['refiner','🏗️','건설·인테리어 자재 공장',4e7,'분기 자동수익 +400만',4e6],['lawyer','⚖️','전담 변리사·세무사단',8e7,'세무·M&A 완벽 방어, 분기 +800만',8e6],
 ['gold_safe','🏦','스위스 골드바 금고',2e8,'분기마다 현금의 2% 배당'],['bloomberg','📡','블룸버그 터미널',35e7,'사업·투자수익 +25% & 분기 +3,000만',3e7]];
 const END=[['👑','전설의 100억 제왕 & 로열패밀리','순자산 100억 + 결혼'],['🦅','화려한 골드미스터','순자산 100억 + 독신'],['📈','월스트리트 사업·투자의 신','사업 특화 + 사업수완 250↑'],['🏢','메트로폴리스 빌딩왕','임대 특화 + 50억↑'],
 ['🎼','그래미 수상 마에스트로','작곡 특화 + 예술 250↑'],['💡','특허 & 리페어 마스터','특허/수리 특화 + 기술 250↑'],['🤝','글로벌 인맥 제왕','인맥 특화 + 인맥 800↑'],['🌆','강남 사옥 슈퍼리치','순자산 10억~100억'],
 ['🤖','무자본 AI 제국의 설계자','AI 6대 사업 완성 + AI 특화'],['🙂','소박한 은퇴','그 외'],['🎭','사랑과 전쟁: 불사조 로열패밀리','[히든] 특수동거·가출복귀 후 100억 달성']];
-// ===== 상태 (25세 시작, 40턴 제한, 유하은 +20턴, 제니퍼 8분기 후 20억 잠적, 본처 냉전/복귀) =====
+// ===== 상태 =====
 const init=()=>({age:25,quarter:1,turn:40,cash:3e6,debt:0,passive:0,tech:20,biz:20,art:20,net:20,stress:0,edu:initEdu(),
  dateUsedInQuarter:false,lastDatedId:null,
  patentUsedInQuarter:false,patentUpUsedInQuarter:false,patentRegCount:0,
  marriedWifeId:null,spouseHappiness:80,
  runawayWifeId:null,specialTurns:0,jenniferDone:false,haeunDone:false,wifeGrudge:false,reconciled:false,
  candidates:W.map((w,i)=>({id:i,met:false,affection:15,req:Math.floor(R()*6)+1,rej:0,gs:0})),patentTickets:0,lastRoyalty:2e6,ownedItems:[],inv:{},lv:{},queue:[null,null,null],lastQueue:PRE.start,
- patents:[],rivalCash:3e7,taxAuditRisk:5,maThreatRisk:10,hospitalCount:0,ngPlusCount:1,aiRuns:{},aiSynergy:false,catRuns:{},logs:['🎯 [25세 1분기 · 40턴 제한] 유하은(🎻)과 결혼 시 +20턴 영구 증가! 제니퍼(🎰)는 8분기 동거(특허확률 2배·강화 3배) 후 떠날 때 20억을 들고 잠적합니다!']});
-let state=init(),viewAll=false,curCat=6,busy=false;
+ patents:[],rivalCash:3e7,taxAuditRisk:5,maThreatRisk:10,hospitalCount:0,ngPlusCount:1,aiRuns:{},aiSynergy:false,catRuns:{},logs:['🎯 [25세 1분기 · 40턴 제한] 🏬백화점 선물마다 선호하는 인물(히로인·VIP)이 표시됩니다! 맞춤 선물로 빠르게 호감도와 인맥을 올리세요!']});
+let state=init(),viewAll=false,curCat=0,busy=false;
 // 상단 스케줄 배치 순서: 백화점 옆으로 힐링·교육·수리·외식·작곡·인맥·건설·임대·특허·사업·AI 순서
 const CATS=[
  ['🏬백화점',0],
@@ -463,26 +472,90 @@ function board(){
   return `<button class="tile big ${lk?'off':''}" style="min-height:118px" onclick="addQ(${s.id})"><div class="flex justify-between"><span class="text-2xl">${lk?'🔒':s.icon}</span><span class="text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${state.marriedWifeId===8&&s.cat===6?'무료(배우자)':tag(s)}</span></div><div class="flex justify-between items-center mt-1"><span class="text-xs font-black text-amber-300 truncate">${s.name}</span>${eduBadge}</div><div class="flex gap-0.5 my-0.5">${[1,2,3,4,5].map(i=>`<i class="h-1 flex-1 rounded ${i<=L?'bg-amber-400':'bg-slate-700'}"></i>`).join('')}</div><div class="text-[10px] ${lk?'text-rose-300 font-bold':'text-slate-300'} border-t border-slate-800 pt-1 leading-tight">${lk?'🔒 '+lw:'Lv.'+L+'/5 · '+(s.note?s.note+'<br>':'')+sub(s)}</div></button>`;
  }).join('');
 }
-function deptBoard(){const b=$('board'),inv=state.inv||{},cnt=Object.values(inv).reduce((a,v)=>a+v,0),dc=state.marriedWifeId===0?.9:1,GL={f:'👩 여성용',u:'👫 공용',m:'👨 남성용'};b.className='flex-1 min-h-0 overflow-y-auto p-1';
- b.innerHTML=`<div class="flex justify-between items-center text-[11px] mb-1 gap-1"><b class="text-amber-300">🏬 VIP 백화점 — 명품 ${DEPT.length}선${dc<1?' (비비안 10% 할인)':''}</b><span class="text-pink-300 text-right">🎁 보관함 ${cnt}개 · 여성 선물=💍인연센터 · 남성 선물=<button class="bg-sky-700 text-white px-1.5 rounded font-black" onclick="openVipList()">🤝거래처 선물</button></span></div>`+DG.map((g,gi)=>`<div class="text-[11px] font-black text-sky-300 mt-1.5">${g[0]} ${g[1]} <span class="text-[9px] text-slate-400">${GL[GG[gi]]}</span></div><div class="grid grid-cols-5 gap-1">`+DEPT.filter(d=>d.g===gi).map(d=>`<button class="tile ${state.cash<d.p*dc?'off':''}" style="align-items:center;text-align:center;min-height:96px" onclick="buyDept(${d.id})">${inv[d.id]?`<span class="self-end text-[9px] bg-pink-600 rounded px-1">x${inv[d.id]}</span>`:'<span class="h-3"></span>'}<span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[10px] font-bold text-amber-200 truncate w-full">${d.n}</span><span class="text-[10px] text-emerald-400 font-black">${won(Math.floor(d.p*dc))}</span></button>`).join('')+'</div>').join('')}
+// ===== 🏬 백화점 보드: 모든 선물마다 선호하는 인물(히로인·VIP) 직접 표시 =====
+function deptBoard(){
+ const b=$('board'),inv=state.inv||{},cnt=Object.values(inv).reduce((a,v)=>a+v,0),dc=state.marriedWifeId===0?.9:1,GL={f:'👩 여성용',u:'👫 공용',m:'👨 남성용'};
+ b.className='flex-1 min-h-0 overflow-y-auto p-1';
+ b.innerHTML=`<div class="flex flex-wrap justify-between items-center text-[11px] mb-1 gap-1 bg-slate-900/90 border border-slate-700 rounded px-2 py-1">
+  <b class="text-amber-300">🏬 VIP 백화점 — 명품 ${DEPT.length}선${dc<1?' (💃비비안 10% 할인 적용중!)':''} · 선물마다 선호 인물(×1.8 보너스) 표시</b>
+  <span class="text-pink-300">🎁 보관함 <b>${cnt}개</b> · 여성선물=<button class="bg-pink-600 text-white px-1.5 py-0.5 rounded font-black" onclick="openRomance()">💍인연센터</button> · 남성선물=<button class="bg-sky-700 text-white px-1.5 py-0.5 rounded font-black" onclick="openVipList()">🤝거래처 선물</button></span>
+ </div>`+DG.map((g,gi)=>{
+  const fans=whoLikesG(gi);
+  const fanBadges=fans.map(f=>`<span class="px-1.5 py-0.2 rounded text-[9.5px] font-bold ${f.isVip?'bg-sky-950 border border-sky-500/60 text-sky-200':'bg-pink-950 border border-pink-500/60 text-pink-200'}">${f.ic}${f.name}</span>`).join(' ');
+  const cardFanText=whoLikesShort(gi,true);
+  const isMale=GG[gi]==='m';
+  return `<div class="flex flex-wrap items-center justify-between gap-1 bg-slate-900/60 border-l-4 ${isMale?'border-sky-400':'border-pink-400'} px-2 py-1 mt-2 mb-1 rounded-r">
+   <div class="text-[11px] font-black text-sky-300">${g[0]} ${g[1]} <span class="text-[9.5px] text-slate-400 font-normal">(${GL[GG[gi]]})</span></div>
+   <div class="flex flex-wrap items-center gap-1 text-[9.5px]"><span class="text-amber-300 font-black">${isMale?'🤝 선호 VIP(×1.8):':'💖 선호 인물(×1.8):'}</span> ${fanBadges}</div>
+  </div>
+  <div class="grid grid-cols-5 gap-1.5">`+DEPT.filter(d=>d.g===gi).map(d=>{
+   const price=Math.floor(d.p*dc);
+   return `<button class="tile ${state.cash<price?'off':''}" style="align-items:center;text-align:center;min-height:112px" title="${d.n} (${won(price)}) — 선호 인물: ${cardFanText}" onclick="buyDept(${d.id})">
+    <div class="w-full flex justify-between items-center text-[8.5px]">
+     <span class="text-slate-400">${g[0]}${g[1].split('·')[0]}</span>
+     ${inv[d.id]?`<span class="bg-pink-600 text-white font-black rounded px-1">보유 x${inv[d.id]}</span>`:`<span></span>`}
+    </div>
+    <span style="font-size:32px;line-height:1.05">${d.ic}</span>
+    <span class="text-[10px] font-bold text-amber-200 truncate w-full">${d.n}</span>
+    <span class="text-[10px] text-emerald-400 font-black">${won(price)}</span>
+    <span class="text-[8.5px] ${isMale?'text-sky-300 bg-sky-950/90 border-sky-700/60':'text-pink-200 bg-pink-950/90 border-pink-700/60'} border rounded px-1 py-0.5 w-full truncate font-bold" title="선호 인물: ${cardFanText}">${isMale?'🤝':'💖'} ${cardFanText}</span>
+   </button>`;
+  }).join('')+'</div>';
+ }).join('');
+}
 function buyDept(id){const d=DEPT[id],p=Math.floor(d.p*(state.marriedWifeId===0?.9:1));if(state.cash<p)return log(`💸 ${d.n}: 현금 부족 (${won(p)} 필요)`,'text-rose-300');state.cash-=p;state.inv=state.inv||{};state.inv[id]=(state.inv[id]||0)+1;
- const c0=state.candidates[0];if(!c0.met){c0.met=true;log('💘 백화점 VIP 라운지에서 비비안을 만났습니다!','text-pink-300 font-bold')}sfxCoin();log(`🏬 ${d.n} 구매 (-${won(p)}) — 인연 센터에서 선물하세요!`,'text-pink-300');ui();board()}
-// ===== 🎁 선물 조합 =====
+ const c0=state.candidates[0];if(!c0.met){c0.met=true;log('💘 백화점 VIP 라운지에서 비비안을 만났습니다!','text-pink-300 font-bold')}sfxCoin();log(`🏬 ${d.n} 구매 (-${won(p)}) [선호: ${whoLikesShort(d.g,true)}] — 인연 센터에서 선물하세요!`,'text-pink-300');ui();board()}
+// ===== 🎁 선물 조합 (선물 선택 모달에서도 각 선물의 선호 인물 & 현재 대상 취향저격 여부 표시) =====
 let gsel=[];
 const pMarry=(i,da=0,dg=0)=>{const c=state.candidates[i];return cl(.08+Math.min(100,c.affection+da)*.004+((c.gs||0)+dg)*.02,.05,.95)};
 function giftCalc(hi,ids){return giftCalcP(PREF[hi],ids)}
 function giftCalcP(pf,ids){const gs=new Set(ids.map(i=>DEPT[i].g));let pts=0;ids.forEach(i=>{const d=DEPT[i];pts+=Math.max(2,(Math.log10(d.p)-4)*3.5)*(pf.includes(d.g)?1.8:1)});
  const combo=1+.25*(gs.size-1),perfect=pf.every(g=>gs.has(g))?1.3:1;return{aff:Math.round(pts*combo*perfect),combo,perfect,types:gs.size}}
-function openGift(hi){const _c=state.candidates[hi];if(_c.lock>0)return alertBox('만날 수 없음','청혼을 거절당해 이번 분기에는 만날 수 없습니다.','💔');gsel=[];const inv=state.inv||{},w=W[hi],got=_c.got||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='m');
- modal(`<h2 class="text-base font-black text-pink-300 mb-1">🎁 ${w[0]} ${w[1]}에게 선물 (최대 3개 조합)</h2><p class="text-[11px] text-slate-300 mb-2">취향: ${PREF[hi].map(g=>DG[g][0]+DG[g][1]).join(' · ')} — 서로 다른 분야를 조합하고 취향 두 분야를 모두 맞추면 호감도·청혼확률이 크게 오릅니다. <b class="text-amber-300">이미 준 선물(💝)은 다시 줄 수 없어요.</b></p><div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
- +(items.length?items.map(d=>{const g1=got.includes(d.id);return `<button ${g1?'disabled':''} id="gi${d.id}" onclick="toggleGift(${hi},${d.id})" class="tile ring-amber-400 ${g1?'off':''}" style="align-items:center;text-align:center;min-height:100px"><span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[11px] font-bold text-amber-200">${d.n}</span><span class="text-[10px] text-slate-400">${g1?'💝 이미 선물함':'x'+inv[d.id]+' · '+won(d.p)}</span></button>`}).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 물건이 없습니다. 🏬백화점에서 여성·공용 선물을 구매하세요! (남성 선물은 🤝거래처 선물로)</div>')
- +`</div><div id="giftPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendGift(${hi})" class="bg-pink-600 text-white font-black px-4 py-1.5 rounded">🎁 선물하기</button><button onclick="openRomance()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`)}
+function openGift(hi){
+ const _c=state.candidates[hi];if(_c.lock>0)return alertBox('만날 수 없음','청혼을 거절당해 이번 분기에는 만날 수 없습니다.','💔');
+ gsel=[];const inv=state.inv||{},w=W[hi],got=_c.got||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='m');
+ const myPref=PREF[hi];
+ modal(`<h2 class="text-base font-black text-pink-300 mb-1">🎁 ${w[0]} ${w[1]}에게 선물 (최대 3개 조합)</h2>
+ <p class="text-[11px] text-slate-300 mb-2">• <b>${w[1].split(' ')[0]} 선호 취향(×1.8 보너스)</b>: <span class="text-amber-300 font-black">${myPref.map(g=>DG[g][0]+DG[g][1]).join(' · ')}</span><br>• 서로 다른 분야를 조합하고 위 두 분야를 모두 포함하면 <b>완벽 조합 보너스(×1.3)</b>가 추가됩니다! <b class="text-rose-300">(이미 준 선물 💝은 재선물 불가)</b></p>
+ <div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
+ +(items.length?items.map(d=>{
+  const g1=got.includes(d.id),isFav=myPref.includes(d.g),fanStr=whoLikesShort(d.g,true);
+  return `<button ${g1?'disabled':''} id="gi${d.id}" onclick="toggleGift(${hi},${d.id})" class="tile ring-amber-400 ${g1?'off':''} ${isFav&&!g1?'border-pink-400 bg-pink-950/20':''}" style="align-items:center;text-align:center;min-height:115px">
+   <div class="w-full flex justify-between items-center text-[9px]">
+    <span class="text-slate-400">${DG[d.g][0]}${DG[d.g][1]}</span>
+    ${isFav?`<span class="bg-amber-400 text-slate-950 font-black px-1 rounded">⭐취향저격×1.8</span>`:`<span></span>`}
+   </div>
+   <span style="font-size:32px;line-height:1">${d.ic}</span>
+   <span class="text-[11px] font-bold text-amber-200 truncate w-full">${d.n}</span>
+   <span class="text-[10px] text-slate-300">${g1?'💝 이미 선물함':'보유 x'+inv[d.id]+' · '+won(d.p)}</span>
+   <span class="text-[8.5px] text-pink-200 bg-slate-950/90 border border-slate-700 rounded px-1 py-0.5 w-full truncate">💖 선호: ${fanStr}</span>
+  </button>`;
+ }).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 물건이 없습니다. 🏬백화점에서 여성·공용 선물을 구매하세요! (남성 선물은 🤝거래처 선물로)</div>')
+ +`</div><div id="giftPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendGift(${hi})" class="bg-pink-600 text-white font-black px-4 py-1.5 rounded">🎁 선물하기</button><button onclick="openRomance()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`);
+}
 let vsel=[];
-function openVipList(){const vp=state.vip||{};modal(`<h2 class="text-base font-black text-sky-300 mb-1">🤝 거래처 VIP 선물</h2><p class="text-[11px] text-slate-300 mb-2">남성·공용 선물을 VIP에게 전하면 <b>인맥</b>과 <b>인맥교육 능력치</b>가 오르고 스트레스가 풀려요. 같은 선물은 한 분에게 한 번만 줄 수 있어요.</p><div class="grid grid-cols-2 gap-2">`+VIPS.map((v,i)=>`<button onclick="openVip(${i})" class="tile big" style="align-items:center;text-align:center;min-height:90px"><span style="font-size:35px;line-height:1">${v[0]}</span><span class="text-xs font-black text-amber-300">${v[1]}</span><span class="text-[10px] text-slate-300">취향 ${v[2].map(g=>DG[g][0]).join('')} · 친밀도 ${vp[i]||0}</span></button>`).join('')+`</div>${X}`)}
-function openVip(vi){vsel=[];const inv=state.inv||{},v=VIPS[vi],got=((state.vgot||{})[vi])||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='f');
- modal(`<h2 class="text-base font-black text-sky-300 mb-1">${v[0]} ${v[1]}에게 선물 (최대 3개)</h2><p class="text-[11px] text-slate-300 mb-2">취향: ${v[2].map(g=>DG[g][0]+DG[g][1]).join(' · ')} — 분야를 조합하고 취향을 맞출수록 인맥이 크게 오릅니다.</p><div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
- +(items.length?items.map(d=>{const g1=got.includes(d.id);return `<button ${g1?'disabled':''} id="vi${d.id}" onclick="toggleVip(${vi},${d.id})" class="tile ${g1?'off':''}" style="align-items:center;text-align:center;min-height:100px"><span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[11px] font-bold text-amber-200">${d.n}</span><span class="text-[10px] text-slate-400">${g1?'🤝 이미 선물함':'x'+inv[d.id]+' · '+won(d.p)}</span></button>`}).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 남성·공용 물건이 없습니다. 🏬백화점에서 구매하세요!</div>')
- +`</div><div id="vipPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendVip(${vi})" class="bg-sky-600 text-white font-black px-4 py-1.5 rounded">🎁 전달하기</button><button onclick="openVipList()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`)}
+function openVipList(){const vp=state.vip||{};modal(`<h2 class="text-base font-black text-sky-300 mb-1">🤝 거래처 VIP 선물</h2><p class="text-[11px] text-slate-300 mb-2">남성·공용 선물을 VIP에게 전하면 <b>인맥</b>과 <b>인맥교육 능력치</b>가 오르고 스트레스가 풀려요. 같은 선물은 한 분에게 한 번만 줄 수 있어요.</p><div class="grid grid-cols-2 gap-2">`+VIPS.map((v,i)=>`<button onclick="openVip(${i})" class="tile big" style="align-items:center;text-align:center;min-height:95px"><span style="font-size:35px;line-height:1">${v[0]}</span><span class="text-xs font-black text-amber-300">${v[1]}</span><span class="text-[10px] text-sky-200 font-bold">선호 취향: ${v[2].map(g=>DG[g][0]+DG[g][1]).join(' · ')}</span><span class="text-[10px] text-slate-400">현재 친밀도 ${vp[i]||0}</span></button>`).join('')+`</div>${X}`)}
+function openVip(vi){
+ vsel=[];const inv=state.inv||{},v=VIPS[vi],got=((state.vgot||{})[vi])||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='f');
+ const myPref=v[2];
+ modal(`<h2 class="text-base font-black text-sky-300 mb-1">${v[0]} ${v[1]}에게 선물 (최대 3개)</h2>
+ <p class="text-[11px] text-slate-300 mb-2">• <b>${v[1].split(' (')[0]} 선호 취향(×1.8 보너스)</b>: <span class="text-amber-300 font-black">${myPref.map(g=>DG[g][0]+DG[g][1]).join(' · ')}</span> — 분야를 조합하고 취향을 맞출수록 인맥이 크게 오릅니다.</p>
+ <div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
+ +(items.length?items.map(d=>{
+  const g1=got.includes(d.id),isFav=myPref.includes(d.g),fanStr=whoLikesShort(d.g,true);
+  return `<button ${g1?'disabled':''} id="vi${d.id}" onclick="toggleVip(${vi},${d.id})" class="tile ${g1?'off':''} ${isFav&&!g1?'border-sky-400 bg-sky-950/20':''}" style="align-items:center;text-align:center;min-height:115px">
+   <div class="w-full flex justify-between items-center text-[9px]">
+    <span class="text-slate-400">${DG[d.g][0]}${DG[d.g][1]}</span>
+    ${isFav?`<span class="bg-amber-400 text-slate-950 font-black px-1 rounded">⭐취향저격×1.8</span>`:`<span></span>`}
+   </div>
+   <span style="font-size:32px;line-height:1">${d.ic}</span>
+   <span class="text-[11px] font-bold text-amber-200 truncate w-full">${d.n}</span>
+   <span class="text-[10px] text-slate-300">${g1?'🤝 이미 선물함':'보유 x'+inv[d.id]+' · '+won(d.p)}</span>
+   <span class="text-[8.5px] text-sky-200 bg-slate-950/90 border border-slate-700 rounded px-1 py-0.5 w-full truncate">🤝 선호: ${fanStr}</span>
+  </button>`;
+ }).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 남성·공용 물건이 없습니다. 🏬백화점에서 구매하세요!</div>')
+ +`</div><div id="vipPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendVip(${vi})" class="bg-sky-600 text-white font-black px-4 py-1.5 rounded">🎁 전달하기</button><button onclick="openVipList()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`);
+}
 function toggleVip(vi,id){if((((state.vgot||{})[vi])||[]).includes(id))return;const k=vsel.indexOf(id);if(k>=0)vsel.splice(k,1);else if(vsel.length<3)vsel.push(id);DEPT.forEach(d=>{const e=$('vi'+d.id);if(e)e.classList.toggle('ring-2',vsel.includes(d.id))});
  const g=giftCalcP(VIPS[vi][2],vsel);$('vipPrev').innerHTML=vsel.length?`선택 ${vsel.length}/3 · 인맥 <b class="text-sky-300">+${Math.round(g.aff*.8)}</b> (분야 ${g.types}종 ×${g.combo.toFixed(2)}${g.perfect>1?' · 취향 완벽 ×1.3':''})`:'선물을 고르세요 (0/3)'}
 function sendVip(vi){if(!vsel.length)return;const g=giftCalcP(VIPS[vi][2],vsel),gain=Math.round(g.aff*.8);vsel.forEach(i=>{state.inv[i]--});state.vgot=state.vgot||{};state.vgot[vi]=(state.vgot[vi]||[]).concat(vsel);state.vip=state.vip||{};state.vip[vi]=(state.vip[vi]||0)+g.aff;
@@ -533,7 +606,7 @@ function slots(){
  }).join('');
  $('queueCostSum').textContent=`(비용: ${won(sum)})`;
 }
-// ===== 병원 (과로 입원 & 가출한 와이프 복귀 시 응급실행 공통 처리) =====
+// ===== 병원 =====
 function hospital(src,customMsg){
  sfxAlarm();state.cash-=15e6;if(state.cash<0){state.debt+=-state.cash;state.cash=0}
  ['tech','biz','art','net'].forEach(k=>state[k]=Math.max(5,state[k]-5));
@@ -544,7 +617,7 @@ function hospital(src,customMsg){
  modal(`<div class="scold-box text-center"><div class="text-5xl mb-2">🚑💥</div><h2 class="text-lg font-black text-rose-300 mb-2">대학병원 VIP 응급실 강제 입원!</h2><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-red-500/50 text-left whitespace-pre-line">${customMsg||`[${src}] 수행 중 스트레스 100으로 쓰러졌습니다!\n• 남은 분기 스케줄 전부 취소\n• 입원비 -1,500만 원 (부족하면 대출 전환)\n• 4대 스탯 -5, 배우자 행복도 하락\n※ 🏖️힐링을 적절히 섞어 건강을 관리하세요!`}</p><button onclick="closeModal()" class="bg-amber-500 text-slate-950 font-black px-6 py-2 rounded">퇴원 후 정신 차리기 (스트레스 30)</button></div>`);
  ui();
 }
-// ===== 가출한 와이프 복귀 처리 (제니퍼·유하은이 없을 때 돌아오면 주인공 응급실행 + 뒤끝 냉전 상태 돌입!) =====
+// ===== 가출한 와이프 복귀 처리 =====
 function returnRunawayWife(){
  if(state.runawayWifeId===null||state.runawayWifeId===undefined)return;
  if(isSpecialWife(state.marriedWifeId)){
@@ -662,7 +735,6 @@ function upPatent(i){
   return modal(`<div class="text-center"><div class="text-5xl mb-2">💥📄</div><h3 class="text-base font-black text-rose-300 mb-2">특허 청구항 강화 실패 (이번 분기 1/1회 소모)</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-rose-500/50 whitespace-pre-line">[${p.name}] 강화 심사에 실패했습니다.\n• 현재 강화 성공률: ${prob.toFixed(1)}% (기본 최대 15.0% 제한 / 제니퍼 결혼 시 3배 증가!)</p><button onclick="openPatent()" class="bg-slate-700 text-white font-black px-6 py-1.5 rounded">확인</button></div>`);
  }
 }
-// 특허 M&A 매각 협상 미니 이벤트
 function openSellNego(i){
  const p=state.patents[i];if(!p||p.mature>0)return;
  const pAlex=cl(Math.round(55+((state.edu&&state.edu.biz)||0)*0.2+state.net*0.02),55,85);
@@ -731,7 +803,7 @@ function openAlbum(){const al=ls('pm44_album',[]),hof=ls('pm44_hof',[]);modal(`<
  <div class="grid md:grid-cols-2 gap-3"><div class="grid grid-cols-2 gap-2">`+END.map((e,i)=>`<div class="bg-slate-900 border border-slate-700 p-2 rounded text-center"><div class="text-xl">${al.includes(i)?e[0]:'❓'}</div><div class="font-bold text-amber-300">${al.includes(i)?e[1]:'???'}</div><div class="text-[9.5px] text-slate-400">${e[2]}</div></div>`).join('')+`</div><div class="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1">`+(hof.length?hof.map((h,k)=>`<div>${k+1}위 ${h.i} ${h.n} · ${won(h.v)} (${h.r}회차)</div>`).join(''):'<div class="text-slate-400">기록 없음</div>')+`</div></div>${X}`)}
 function ngPlus(){const bp=state.patents.length?state.patents.reduce((a,b)=>a.royalty>b.royalty?a:b):null,ic=Math.min(5e8,Math.max(5e6,Math.floor(state.cash*.1))),nr=state.ngPlusCount+1;
  state=init();state.ngPlusCount=nr;GOAL=1e11;state.cash=ic;if(bp){state.patents.push({...bp,mature:0});state.passive+=bp.royalty;state.patentRegCount=1}sfxFan();ui();slots();alertBox(`🧬 제${nr}회차 가보 상속`,`유산 현금 ${won(ic)}${bp?`과 가보 특허 [${bp.name}]`:''}을 물려받아 25세(40턴)부터 시작합니다!\n목표: 순자산 1,000억 원`,'🧬')}
-// ===== 인연 (유하은: +20턴 영구증가 & 2분기 동거 / 제니퍼: 8분기 동거 & 떠날 때 20억 잠적 / 본처 가출 & 복귀 시 응급실행 + 냉전) =====
+// ===== 인연 =====
 function openRomance(){
  const m=state.marriedWifeId,used=!!state.dateUsedInQuarter,lastId=state.lastDatedId,rwId=state.runawayWifeId;
  let b;
@@ -754,7 +826,6 @@ function openRomance(){
  <div class="grid md:grid-cols-2 gap-2.5">`+W.map((w,i)=>{
   const c=state.candidates[i],mine=m===i,isRunaway=(rwId===i),lk=c.lock>0;
   const specBlocked=(i===9&&state.jenniferDone)||(i===2&&state.haeunDone);
-  // 유하은(2)과 제니퍼(9)는 일반 와이프와 결혼 중(m!==null && !isSpecialWife(m))이어도 데이트·청혼 가능!
   const canDate=(!lk&&!used&&!specBlocked&&(m===null||(isSpecialWife(i)&&!isSpecialWife(m))));
   const canPropose=(c.met&&c.affection>=60&&!lk&&!specBlocked&&(m===null||(isSpecialWife(i)&&!isSpecialWife(m))));
   const isOther=(lastId!==null&&lastId!==undefined&&lastId!==i);
@@ -763,7 +834,7 @@ function openRomance(){
   const statusTag=mine?(isSpecialWife(i)?`⏳ 동거중(${state.specialTurns}분기)`:`💍 내 아내${state.wifeGrudge?'(💢냉전)':''}`):isRunaway?`🏃‍♀️ 가출중`:specBlocked?`✈️ 떠남(재청혼불가)`:lk?`💔 거절됨`:c.met?`❤️ ${c.affection}% (거절 ${c.rej}회)`:'🔒 미조우';
   const propLabel=specBlocked?'🚫재청혼불가':(i===2&&m!==null)?'🎻+20턴청혼':(i===9&&m!==null)?'🎰8분기청혼':'💍청혼';
   return `<div class="bg-slate-900 border ${mine?'border-pink-400':isRunaway?'border-rose-500':isSpecialWife(i)?'border-amber-400/70':'border-slate-700'} p-2.5 rounded-lg ${lk||specBlocked?'opacity-60':''}"><div class="flex justify-between mb-1"><span class="font-black text-white">${w[0]} ${w[1]}</span><span class="text-[10px] px-1.5 rounded bg-slate-800 text-pink-200">${statusTag}</span></div>${lk?'<div class="text-[10px] text-rose-300 font-bold">💔 청혼 거절 — 이번 분기에는 만날 수 없어요</div>':''}${isRunaway?`<div class="text-[10px] text-rose-300 font-bold">🏃‍♀️ 남편의 외도 동거에 격분해 가출 중! ${!isSpecialWife(m)?'(복귀 가능)':''}</div>`:''}<div class="text-[10.5px] text-emerald-300 font-bold">${w[4]}</div><div class="text-[10.5px] text-rose-300 font-bold">${w[5]}</div>
- <div class="text-[10px] text-amber-300 mt-1">🎯 청혼 성공 ${Math.round(pMarry(i)*100)}% · 취향 ${PREF[i].map(g=>DG[g][0]).join('')}</div><div class="flex gap-1 mt-1 pt-1.5 border-t border-slate-800"><button ${!canDate?'disabled':''} onclick="dateW(${i})" class="flex-1 ${dateBtnCls} font-bold py-1 rounded">${dateLabel}</button><button ${lk||specBlocked?'disabled':''} onclick="openGift(${i})" class="flex-1 ${lk||specBlocked?'bg-slate-800 text-slate-500':'bg-pink-700 text-white'} font-bold py-1 rounded">🎁선물</button>${isRunaway&&!isSpecialWife(m)?`<button onclick="returnRunawayWife()" class="flex-1 py-1 rounded font-black bg-rose-600 text-white">🏠복귀(🚑)</button>`:`<button ${!canPropose?'disabled':''} onclick="propose(${i})" class="flex-1 py-1 rounded font-black ${canPropose?'bg-amber-400 text-slate-950':'bg-slate-800 text-slate-500'}">${propLabel}</button>`}</div></div>`;
+ <div class="text-[10px] text-amber-300 mt-1">🎯 청혼 성공 ${Math.round(pMarry(i)*100)}% · 💖선호선물: <b>${PREF[i].map(g=>DG[g][0]+DG[g][1]).join(' · ')}</b></div><div class="flex gap-1 mt-1 pt-1.5 border-t border-slate-800"><button ${!canDate?'disabled':''} onclick="dateW(${i})" class="flex-1 ${dateBtnCls} font-bold py-1 rounded">${dateLabel}</button><button ${lk||specBlocked?'disabled':''} onclick="openGift(${i})" class="flex-1 ${lk||specBlocked?'bg-slate-800 text-slate-500':'bg-pink-700 text-white'} font-bold py-1 rounded">🎁선물</button>${isRunaway&&!isSpecialWife(m)?`<button onclick="returnRunawayWife()" class="flex-1 py-1 rounded font-black bg-rose-600 text-white">🏠복귀(🚑)</button>`:`<button ${!canPropose?'disabled':''} onclick="propose(${i})" class="flex-1 py-1 rounded font-black ${canPropose?'bg-amber-400 text-slate-950':'bg-slate-800 text-slate-500'}">${propLabel}</button>`}</div></div>`;
  }).join('')+`</div>${X}`);
 }
 function gift(){
@@ -802,7 +873,6 @@ function showScoldAnim(prevId,newId){
 function dateW(i){
  const specBlocked=(i===9&&state.jenniferDone)||(i===2&&state.haeunDone);
  if(state.candidates[i].lock>0||specBlocked)return;
- // 기혼 상태에서는 오직 유하은(2) 또는 제니퍼(9)만 데이트 가능 (단, 이미 유하은/제니퍼와 동거 중이면 불가)
  if(state.marriedWifeId!==null&&(!isSpecialWife(i)||isSpecialWife(state.marriedWifeId)))return;
  if(state.dateUsedInQuarter){
   sfxAlarm();
@@ -840,7 +910,6 @@ function propose(i){
   sfxAlarm();
   return alertBox('🚫 재청혼 불가',`${w[1]}님과는 이미 계약 동거가 끝나 다시 청혼할 수 없습니다!`,'🚫');
  }
- // 일반 히로인은 미혼(m===null)일 때만 청혼 가능, 유하은(2)·제니퍼(9)는 일반 와이프와 결혼 중(m!==null && !isSpecialWife(m))이어도 청혼 가능!
  const allowed=(m===null||(isSpecialWife(i)&&!isSpecialWife(m)));
  if(!c.met||c.affection<60||!allowed||c.lock>0)return;
  if(state.cash<3e6)return alertBox('비용 부족','반지 비용 300만 원이 필요합니다!','💍');
@@ -860,7 +929,6 @@ function propose(i){
    state.wifeGrudge=false;
    const runawayMsg=(prevWife!==null&&!isSpecialWife(prevWife))?`\n\n🏃‍♀️💢 [현재 와이프 가출!]\n${W[prevWife][0]} ${W[prevWife][1]}: "내가 두 눈 시퍼렇게 뜨고 있는데 ${w[1].split(' ')[0]}랑 살림을 차려?! 나 집 나갈 거야!! 나중에 나 돌아올 때 응급실 갈 줄 알아!!"` : '';
    if(i===2){
-    // 🎻 유하은 결혼 성공: +20턴 영구 증가 & 2분기 동거
     state.turn+=20;
     state.specialTurns=2;
     state.haeunDone=true;
@@ -868,7 +936,6 @@ function propose(i){
     log(`🎻⏳ [유하은과 결혼 성공!] 남은 턴이 +20턴 영구 증가했습니다! (현재 남은 턴: ${state.turn}턴)`,'text-purple-300 font-black');
     return alertBox('🎻 유하은과 결혼 성공! (+20턴 영구 증가!)',`${w[0]} ${w[1]}:\n"${w[7]}"\n\n• ⏳ 결혼 즉시 보상: 남은 턴 [+20턴 영구 증가!] (현재 ${state.turn}턴)\n• 🎻 동거 기간: 2분기 동안 작곡 수익 +40% & 분기 스트레스 -18 (이후 월드투어 출국 및 재청혼 불가)${runawayMsg}`,'🎻');
    }else{
-    // 🎰 제니퍼 결혼 성공: 8분기 동거 (특허등록 2배, 강화 3배) & 떠날 때 20억 잠적 예고
     state.specialTurns=8;
     state.jenniferDone=true;
     sfxFan();parts('🎰',12);parts('💍',10);ui();
@@ -947,7 +1014,7 @@ function finishQuarter(hosp){
  slots();
  state.candidates.forEach(c=>{if(c.lock>0)c.lock--});state.patents.forEach(p=>{if(p.mature>0)p.mature--});let inc=state.passive;if(state.ownedItems.includes('gold_safe')&&state.cash>0)inc+=Math.floor(state.cash*.02);
  if(state.debt>0){const i=Math.floor(state.debt*.05);state.cash-=i;log(`🏦 대출 이자 -${won(i)}`,'text-rose-300')}
- let specialLeftType=null; // 'jennifer' | 'haeun'
+ let specialLeftType=null;
  if(state.marriedWifeId!==null&&!hosp){
   const w=state.marriedWifeId;
   const drop=state.wifeGrudge?12:4;
@@ -971,9 +1038,8 @@ function finishQuarter(hosp){
   }
  }
  state.cash+=inc;if(state.cash<0){state.debt+=-state.cash;state.cash=0}state.rivalCash+=Math.floor(R()*25e6)+12e6;if(!hosp)log(`분기 정산 완료 (패시브 +${won(inc)})`,'text-emerald-300 font-bold');
- // 🎰 제니퍼 8분기 종료 시 20억 원 가지고 잠적 처리!
  if(specialLeftType==='jennifer'){
-  const steal=2e9; // 20억 원
+  const steal=2e9;
   state.cash-=steal;
   if(state.cash<0){state.debt+=-state.cash;state.cash=0}
   sfxAlarm();parts('💸',12);mood('h','panic',5000);
@@ -985,7 +1051,6 @@ function finishQuarter(hosp){
  if(!state.aiSynergy&&AI.every(a=>state.aiRuns[a[0]])){state.aiSynergy=true;state.passive+=3e6;state.tech+=10;state.biz+=10;alertBox('🤖 무자본 AI 6대 사업 완성!','유튜브·블로그·전자책·SaaS·대행·POD를 모두 가동했습니다.\n시너지: 분기 패시브 +300만, 기술력·사업수완 +10','🤖')}
  state.turn--;state.quarter++;if(state.quarter>4){state.quarter=1;state.age++}busy=false;ui();board();
  if(state.turn<=0||state.cash-state.debt>=GOAL)return ending();
- // 제니퍼 또는 유하은이 떠났을 때 모달 안내 & 가출한 와이프 복귀->응급실 연동
  if(specialLeftType==='jennifer'){
   if(state.runawayWifeId!==null&&state.runawayWifeId!==undefined){
    const rw=W[state.runawayWifeId];
@@ -1024,7 +1089,7 @@ function brief(){
  }
  else if(s.patentTickets>=reqPatentTickets()&&!s.patentUsedInQuarter)t=`🎫티켓 ${s.patentTickets}장 보유! 이번 분기 📜특허청 정식등록(필요 티켓 ${reqPatentTickets()}장, 확률 ${patentProb().toFixed(1)}%)에 도전하세요!`;
  else if(aiOk&&done<6){const n=AI.find(a=>!r[a[0]]);t=`🤖AI 사업 해금 완료! (${done}/6 가동 중) 다음 추천: ${n[1]} ${n[2]}`}
- else{t=`25세 청년창업(기본 40턴)! 🎻유하은과 결혼하면 +20턴이 영구 증가하고, 🎰제니퍼와 결혼하면 8분기 동안 특허 확률이 폭증합니다!`}
+ else{t=`🏬백화점 선물마다 선호하는 인물이 표시됩니다! 🎻유하은(🏠리빙·💄뷰티)은 +20턴, 🎰제니퍼(⌚주얼리·🍷미식)는 8분기 특허 버프를 줍니다!`}
  $('butlerDialogue').textContent=`"${t}"`;$('taxAuditRiskText').textContent=`세무위험: ${s.taxAuditRisk}%`;$('aiProgress').innerHTML=AI.map(a=>`<span title="${a[2]}" style="opacity:${r[a[0]]?1:.25}">${a[1]}</span>`).join('')
 }
 function ui(){const s=state,n=s.cash-s.debt;s.edu=s.edu||initEdu();['tech','biz','art'].forEach(k=>s[k]=Math.min(999,s[k]));s.net=Math.min(1999,s.net);$('topAge').textContent=`${s.age}세 ${s.quarter}분기`;$('topTurn').textContent=`(남은 ${s.turn}턴)`;$('topCash').textContent=won(s.cash);$('topDebt').textContent=won(s.debt);$('topPassive').textContent='+'+won(s.passive);$('rivalStatusText').textContent=`알렉스: ${won(s.rivalCash)}`;
