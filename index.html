@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>무자본 AI 100억 메이커 (25세 · 20턴 제한)</title>
+<title>무자본 AI 100억 메이커 (25세 · 40턴 제한)</title>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -26,7 +26,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:radial-grad
 <body class="flex flex-col p-1.5 gap-1.5">
 <header class="pm-frame px-2.5 py-1 flex items-center justify-between shrink-0 h-[46px]">
  <div class="flex items-center gap-1.5 overflow-hidden">
-  <span class="text-lg">👑</span><h1 class="text-sm md:text-base font-black text-amber-300 truncate">무자본 AI 100억 메이커 (25세 · 20턴)</h1>
+  <span class="text-lg">👑</span><h1 class="text-sm md:text-base font-black text-amber-300 truncate">무자본 AI 100억 메이커 (25세 · 40턴)</h1>
   <div class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded text-xs shrink-0"><span id="topAge" class="font-extrabold text-sky-300"></span> <span id="topTurn" class="text-[10px] text-amber-400 font-bold"></span> <span id="agingBadge" class="text-[9.5px] px-1 rounded"></span></div>
   <div onclick="openRival()" class="bg-rose-950 border border-rose-500/70 px-2 py-0.5 rounded text-[10.5px] font-bold text-rose-200 cursor-pointer shrink-0">⚔️ <span id="rivalStatusText"></span></div>
   <div class="bg-slate-900 border border-slate-700 px-2 py-0.5 rounded hidden sm:flex gap-2 text-xs shrink-0"><span><span class="text-slate-400 text-[10px]">현금:</span> <b id="topCash" class="text-emerald-400"></b></span><span><span class="text-slate-400 text-[10px]">대출:</span> <b id="topDebt" class="text-rose-400"></b></span><span><span class="text-slate-400 text-[10px]">패시브:</span> <b id="topPassive" class="text-amber-300"></b></span></div>
@@ -84,7 +84,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:radial-grad
 <div id="modal" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-50 p-4"><div id="mbox" class="pm-frame max-w-3xl w-full p-5 max-h-[90vh] overflow-y-auto text-xs"></div></div>
 <script>
 const $=id=>document.getElementById(id),R=Math.random,cl=(v,a,b)=>Math.max(a,Math.min(b,v)),sleep=ms=>new Promise(r=>setTimeout(r,ms));
-let GOAL=1e10,deptFilter='all';
+let GOAL=1e10;
 function won(n){const a=Math.abs(Math.floor(n)),s=n<0?'-':'';if(a>=1e8){const e=Math.floor(a/1e8),m=Math.floor(a%1e8/1e4);return s+(m>0?`${e}억 ${m.toLocaleString()}만`:`${e}억 원`)}if(a>=1e4)return s+`${Math.floor(a/1e4).toLocaleString()}만 원`;return s+`${a.toLocaleString()}원`}
 // ===== 8대 교육 고유 능력치 정의 (수리·외식·작곡·인맥·건설·임대·특허·사업) =====
 const EDU_META={
@@ -139,24 +139,20 @@ function upgradeProb(){
 function reqPatentTickets(){
  return 1+((state&&state.patentRegCount)||0);
 }
-// 특수 동거 히로인 판별 (2: 유하은, 9: 제니퍼 — 기혼 상태에서도 청혼 가능 & 현재 와이프 가출)
+// 특수 히로인 판별 (2: 유하은, 9: 제니퍼 — 기혼 상태에서도 청혼 가능 & 현재 와이프 가출)
 const isSpecialWife=id=>(id===2||id===9);
-// 김민지(6)가 현재 잠적 중이 아닌지 판별
-const isMinjiActive=()=>state&&state.marriedWifeId===6&&(state.minjiAwayTurns||0)<=0;
-// 윤세아(4)가 아내 또는 첩으로 활성화되어 있는지 판별
-const isSeahActive=()=>state&&(state.marriedWifeId===4||!!state.concubine);
 // ===== 10인의 인연 =====
 const W=[
 ['💃','비비안 (청담동 쇼퍼홀릭)','#ec4899',0,'🟢 분기 인맥+15 & 백화점 10% 할인','🔴 명품 과소비 분기 -1,200만',['어머, 에르메스 버킨백도 없이 청혼하시는 거예요?','청담동 VIP 라운지 회원권 끊어오시면 생각해 볼게요~'],'여보~ 앞으로 내 카드값 감당할 자신 있지? 인맥은 내가 책임질게! 💖'],
 ['⚖️','한서연 (에이스 특허변리사)','#38bdf8',1,'🟢 특허·수리 수익 +35% & 분기 로열티 +400만','🔴 완벽주의 잔소리 분기 스트레스 +10',['특허 청구항이 아직 허술하네요. 기각입니다.','기술력과 사업 비전을 더 증명해 보이세요.'],'혼인 계약은 상호 이익이군요. 승인합니다! ⚖️'],
 ['🎻','유하은 (천재 첼리스트)','#a855f7',8,'🟢 기혼 상태에서도 청혼 가능! 결혼 즉시 [+20턴 영구 증가] & 작곡수익 +40%·스트레스 -18','🔴 2분기 동거 후 월드투어 출국(재청혼 불가) · 결혼 시 현재 와이프 가출(복귀 시 응급실행!)',['아직 제 첼로 선율과 어울리는 깊은 감성이 부족해요...','영감이 차오를 때까지 기다려 주세요.'],'당신의 열정에 반했어요! 제 음악으로 당신의 시간을 +20턴(5년) 더 늘려드릴게요! 🎻⏳'],
 ['🏗️','강태희 (인테리어·건설 CEO)','#f97316',5,'🟢 건설·인테리어 수익 +40% & 분기 기술력 +10','🔴 현장 기질로 분기 스트레스 +5',['이 설계도에서 구조 계산부터 다시 하고 오세요!','현장 먼지 마실 각오 안 됐으면 반지 집어넣으쇼!'],'좋소! 우리 부부가 대한민국 스카이라인을 새로 그립시다! 🏗️'],
-['🕵️','윤세아 (글로벌 인맥 에이전시 대표)','#64748b',3,'🟢 [첩(세컨드) 가능!] 인맥 사업 수익 +35% & 알렉스 자산 분기 -1,500만 (본처 가출 없음)','🔴 기존 능력(집착 스트레스+12·정보비-500만) + 스트레스 +30 추가 증가(분기 총 스트레스 +42!)',['어제 오후 3시에 누구 만났는지 다 알아요. 아직 못 믿겠네요.','보안 테스트를 통과하기 전엔 청혼 안 받습니다.'],'본처가 있든 없든 상관없어요. 당신의 그림자 첩이 되어 인맥은 책임지겠지만, 집착 스트레스(+42)는 각오해요! 🕵️'],
-['🏢','오주영 (강남 꼬마빌딩 큰손)','#eab308',7,'🟢 임대·사업 수익 +35% & 배당 +800만','🔴 [선물 절대 안 받음! 오직 데이트만 가능] 품위유지비 분기 -1,500만',['테헤란로에 빌딩 한 채는 있어야 제 옆에 설 수 있어요.','우리 가문 기준에 맞추려면 아직 멀었답니다.'],'명품 선물 따윈 안 받지만 당신의 진심은 인정하죠. 내 빌딩들과 시너지를 내봐요! 🏢'],
-['💻','김민지 (천재 AI 해커)','#10b981',10,'🟢 [데이트 불가·선물 전용] 🤖AI사업 수익 +30% & 분기 기술력 +16','🔴 결혼 시 [3분기마다 사라졌다가 2분기 후 복귀] 반복 & 은둔형 분기 인맥 -8',['지금 로컬 LLM 파인튜닝 중이니까 말 걸지 마세요.','당신 마음의 알고리즘이 아직 최적화가 덜 됐어요.'],'시스템 승인 완료... 단, 난 3분기마다 해킹 벙커로 잠적했다가 2분기 뒤에 돌아올 거야! 💻'],
+['🕵️','윤세아 (글로벌 인맥 에이전시 대표)','#64748b',3,'🟢 인맥 사업 수익 +35% & 알렉스 자산 -1,500만','🔴 집착 스트레스 +12 & 정보비 -500만',['어제 오후 3시에 누구 만났는지 다 알아요. 아직 못 믿겠네요.','보안 테스트를 통과하기 전엔 청혼 안 받습니다.'],'당신의 과거부터 미래까지 조회 끝났어요. 이제 내 남자예요! 🕵️'],
+['🏢','오주영 (강남 꼬마빌딩 큰손)','#eab308',7,'🟢 임대·사업 수익 +35% & 배당 +800만','🔴 품위유지비 분기 -1,500만',['테헤란로에 빌딩 한 채는 있어야 제 옆에 설 수 있어요.','우리 가문 기준에 맞추려면 아직 멀었답니다.'],'당신의 수완이라면 내 빌딩들과 시너지가 나겠네요. 결혼해요! 🏢'],
+['💻','김민지 (천재 AI 해커)','#10b981',10,'🟢 🤖AI사업 수익 +30% & 분기 기술력 +16','🔴 은둔형으로 분기 인맥 -8',['지금 로컬 LLM 파인튜닝 중이니까 말 걸지 마세요.','당신 마음의 알고리즘이 아직 최적화가 덜 됐어요.'],'시스템 승인 완료... 평생 당신의 메인 서버 관리자가 되어줄게요! 💻'],
 ['🍽️','박수아 (미슐랭 셰프·레스토랑 오너)','#f43f5e',4,'🟢 외식·카페 수익 +35% & 분기 인맥 +18','🔴 야간 영업·식재료비 분기 -800만 & 기술력 -5',['오빠~ 이 정도 반지로 내 마음을 사려고?','제 코스요리를 다 드셔 보시고 다시 오세요~'],'이렇게 끈질긴 남자는 처음이야! 평생 당신 식탁은 내가 책임질게! 🍽️'],
 ['🎓','이소민 (입시 스타강사·교육 컨설턴트)','#2dd4bf',6,'🟢 교육 고유능력치 획득 +50% & 수강료 무료 & 스트레스 -28','🔴 교육 외 사업 수익 -10%',['지금은 수업 준비로 바빠요. 다음 학기에 다시 말씀하세요.','마음의 커리큘럼부터 차근차근 쌓아 보세요.'],'당신의 인생 커리큘럼에 평생 함께 수강할게요~ 🎓'],
-['🎰','제니퍼 (월스트리트 승부사)','#fbbf24',9,'🟢 기혼 상태에서도 청혼 가능! 8분기 동거 동안 특허등록 확률 2배·강화 확률 3배','🔴 8분기 후 떠날 때 [20억 원 + 명품 보관함 전부] 들고 잠적! · 현재 와이프 가출',['달링~ 이 정도 프로포즈론 내 룰렛이 안 돌아가!','한 번 더 거절에 베팅할래! 다음번엔 웃어줄지도?'],'잭팟!! 8분기 동안 특허 확률 2배·강화 3배로 밀어줄게 달링! (대신 헤어질 때 20억이랑 명품 보관함은 싹 내 거야~) 🎰']];
+['🎰','제니퍼 (월스트리트 승부사)','#fbbf24',9,'🟢 기혼 상태에서도 청혼 가능! 8분기 동거 동안 특허등록 확률 2배·강화 확률 3배','🔴 8분기 후 떠날 때 [20억 원] 들고 잠적!(재청혼 불가) · 결혼 시 현재 와이프 가출(복귀 시 응급실행!)',['달링~ 이 정도 프로포즈론 내 룰렛이 안 돌아가!','한 번 더 거절에 베팅할래! 다음번엔 웃어줄지도?'],'잭팟!! 8분기 동안 특허 확률 2배·강화 3배로 화끈하게 밀어줄게 달링! (대신 헤어질 때 위자료 20억은 내 거야~) 🎰']];
 // ===== 72 스케줄: S(분류,아이콘,이름,비용,즉시수익,월패시브,스탯,옵션) =====
 const SC=[];const S=(cat,icon,name,cost,gain,pas,st,x={})=>SC.push({id:SC.length,cat,icon,name,cost,gain,pas,st,...x});
 const T=(roy,n=1)=>({ticket:n,roy});
@@ -215,7 +211,7 @@ const _pos={};SC.forEach(s=>{
  else{s.reqEdu=[0,0,25,50,75,100,125,150][s.idx]||0}
 });
 const lvOf=r=>[1,3,6,10,15].filter(t=>r>=t).length;
-// ===== 🏬 백화점 명품 100선 & 각 선물별 선호 인물 매핑 (오주영[5]은 선물을 받지 않으므로 제외) =====
+// ===== 🏬 백화점 명품 60선 =====
 const DG=[['👜','가방·잡화'],['⌚','시계·주얼리'],['👗','패션'],['💄','뷰티·향수'],['🍷','미식·주류'],['🏠','리빙·인테리어'],['🧥','남성 패션'],['🕰️','남성 시계·소품'],['⛳','남성 골프·레저'],['🥃','남성 시가·바']],GG=['f','f','f','f','u','u','m','m','m','m'],DEPT=[];
 ['👜|에르메스 버킨:4000,🛍️|샤넬 플랩백:2200,👝|디올 레이디 클러치:600,🎀|프라다 리나일론 백:200,👛|구찌 재키 숄더백:350,🧺|보테가 카세트 백:500,🕶️|톰포드 선글라스:90,🧣|생로랑 실크 스카프:80,🪪|고야드 카드지갑:90,🎒|루이비통 알마 백:420',
 '💎|티파니 다이아 목걸이:3000,💍|해리윈스턴 다이아 반지:30000,📿|불가리 세르펜티 팔찌:1500,🕐|까르띠에 탱크 여성 워치:1200,🌸|반클리프 알함브라 목걸이:1000,👑|쇼메 티아라:8000,💠|쇼파드 해피다이아몬드:900,🔮|모브쎄 사파이어 귀걸이:500,🦋|피아제 포제션 링:700,✨|다미아니 벨에포크 브레이슬릿:650',
@@ -228,39 +224,27 @@ const DG=[['👜','가방·잡화'],['⌚','시계·주얼리'],['👗','패션'
 '⛳|타이틀리스트 골프 풀세트:500,🏌️|프리미엄 캐디백:200,🎣|시마노 낚시 세트:300,🚴|피나렐로 로드바이크:1200,🛶|요트 클럽 멤버십:5000,🎧|B&W 헤드폰:150,😎|레이밴 파일럿 선글라스:40,🏎️|페라리 모형 컬렉션:60,🎿|프리미엄 스키 장비:350,🎾|윔블던 한정 라켓:70',
 '🚬|코히바 시가 세트:150,🥃|발렌타인 30년:120,🍸|바카라 칵테일 바 세트:80,🧰|시가 휴미더 상자:300,🥂|리델 크리스탈 잔:70,🃏|프리미엄 포커 세트:60,♟️|대리석 체스 세트:150,📚|초판본 고서 컬렉션:500,🎼|하이엔드 LP 턴테이블:200,🍺|벨기에 수도원 맥주:30'
 ].forEach((str,g)=>str.split(',').forEach(x=>{const[a,b]=x.split('|'),[n,p]=b.split(':');DEPT.push({id:DEPT.length,g,ic:a,n,p:p*1e4})}));
-// PREF[5](오주영)는 선물을 받지 않으므로 빈 배열 []로 설정
-const PREF=[[0,3],[1,5],[5,3],[2,5],[1,2],[],[5,4],[4,3],[3,5],[1,4]];
+const PREF=[[0,3],[1,5],[5,3],[2,5],[1,2],[1,0],[5,4],[4,3],[3,5],[1,4]];
 const VIPS=[['🎩','박 회장 (재계 원로)',[7,9]],['🏛️','정 의원 (정계)',[6,8]],['🏦','김 은행장 (금융계)',[6,7]],['📊','최 대표 (투자계)',[8,9]]];
-function whoLikesG(g){
- const res=[];
- PREF.forEach((pf,hi)=>{if(pf.includes(g))res.push({ic:W[hi][0],name:W[hi][1].split(' ')[0],full:W[hi][1],isVip:false,id:hi})});
- VIPS.forEach((vp,vi)=>{if(vp[2].includes(g))res.push({ic:vp[0],name:vp[1].split(' (')[0],full:vp[1],isVip:true,id:vi})});
- return res;
-}
-function whoLikesShort(g,withIcon=true){
- return whoLikesG(g).map(x=>(withIcon?x.ic:'')+x.name).join('·');
-}
 const SL={tech:'기술',biz:'사업',art:'예술',net:'인맥',stress:'🔥'};
 const tag=s=>s.cost?'-'+won(s.cost):s.gain?'+'+won(s.gain):'무료';
 const sub=s=>Object.entries(s.st).map(([k,v])=>SL[k]+(v>0?'+':'')+v).join(' ')+(s.pas?` 💰+${won(s.pas)}`:'')+(s.ticket?` 🎫+${s.ticket}`:'');
-// ===== 상점 / 엔딩 =====
+// ===== 상점 / 엔딩 (히든 엔딩 10번 추가) =====
 const SHOP=[['cello','🎻','수제 마스터피스 첼로',45e5,'작곡 스트레스 회복 +35%'],['ai_pc','🖥️','Mac Studio 로컬LLM 서버',12e6,'기술력 획득 +30%'],['espresso','☕','황금 에스프레소 머신',25e5,'스트레스 증가량 -25%'],
 ['patent_wall','📜','글로벌 특허증서 컬렉션',25e6,'분기 자동수익 +200만',2e6],['refiner','🏗️','건설·인테리어 자재 공장',4e7,'분기 자동수익 +400만',4e6],['lawyer','⚖️','전담 변리사·세무사단',8e7,'세무·M&A 완벽 방어, 분기 +800만',8e6],
 ['gold_safe','🏦','스위스 골드바 금고',2e8,'분기마다 현금의 2% 배당'],['bloomberg','📡','블룸버그 터미널',35e7,'사업·투자수익 +25% & 분기 +3,000만',3e7]];
 const END=[['👑','전설의 100억 제왕 & 로열패밀리','순자산 100억 + 결혼'],['🦅','화려한 골드미스터','순자산 100억 + 독신'],['📈','월스트리트 사업·투자의 신','사업 특화 + 사업수완 250↑'],['🏢','메트로폴리스 빌딩왕','임대 특화 + 50억↑'],
 ['🎼','그래미 수상 마에스트로','작곡 특화 + 예술 250↑'],['💡','특허 & 리페어 마스터','특허/수리 특화 + 기술 250↑'],['🤝','글로벌 인맥 제왕','인맥 특화 + 인맥 800↑'],['🌆','강남 사옥 슈퍼리치','순자산 10억~100억'],
 ['🤖','무자본 AI 제국의 설계자','AI 6대 사업 완성 + AI 특화'],['🙂','소박한 은퇴','그 외'],['🎭','사랑과 전쟁: 불사조 로열패밀리','[히든] 특수동거·가출복귀 후 100억 달성']];
-// ===== 상태 (25세 · 20턴 제한 · 윤세아 첩(concubine) · 오주영 선물불가 · 김민지 데이트불가 및 3분기 동거/2분기 잠적) =====
-const init=()=>({age:25,quarter:1,turn:20,cash:3e6,debt:0,passive:0,tech:20,biz:20,art:20,net:20,stress:0,edu:initEdu(),
+// ===== 상태 (25세 시작, 40턴 제한, 유하은 +20턴, 제니퍼 8분기 후 20억 잠적, 본처 냉전/복귀) =====
+const init=()=>({age:25,quarter:1,turn:40,cash:3e6,debt:0,passive:0,tech:20,biz:20,art:20,net:20,stress:0,edu:initEdu(),
  dateUsedInQuarter:false,lastDatedId:null,
  patentUsedInQuarter:false,patentUpUsedInQuarter:false,patentRegCount:0,
  marriedWifeId:null,spouseHappiness:80,
- concubine:false,
- minjiPresentTurns:3,minjiAwayTurns:0,
  runawayWifeId:null,specialTurns:0,jenniferDone:false,haeunDone:false,wifeGrudge:false,reconciled:false,
  candidates:W.map((w,i)=>({id:i,met:false,affection:15,req:Math.floor(R()*6)+1,rej:0,gs:0})),patentTickets:0,lastRoyalty:2e6,ownedItems:[],inv:{},lv:{},queue:[null,null,null],lastQueue:PRE.start,
- patents:[],rivalCash:3e7,taxAuditRisk:5,maThreatRisk:10,hospitalCount:0,ngPlusCount:1,aiRuns:{},aiSynergy:false,catRuns:{},logs:['🎯 [25세 1분기 · 20턴 제한] 윤세아(🕵️) 첩 영입 가능(스트레스+30 추가), 오주영(🏢) 선물 거부, 김민지(💻) 데이트 불가(결혼 시 3분기마다 사라졌다 2분기 후 복귀) 적용!']});
-let state=init(),viewAll=false,curCat=0,busy=false;
+ patents:[],rivalCash:3e7,taxAuditRisk:5,maThreatRisk:10,hospitalCount:0,ngPlusCount:1,aiRuns:{},aiSynergy:false,catRuns:{},logs:['🎯 [25세 1분기 · 40턴 제한] 유하은(🎻)과 결혼 시 +20턴 영구 증가! 제니퍼(🎰)는 8분기 동거(특허확률 2배·강화 3배) 후 떠날 때 20억을 들고 잠적합니다!']});
+let state=init(),viewAll=false,curCat=6,busy=false;
 // 상단 스케줄 배치 순서: 백화점 옆으로 힐링·교육·수리·외식·작곡·인맥·건설·임대·특허·사업·AI 순서
 const CATS=[
  ['🏬백화점',0],
@@ -289,12 +273,12 @@ function closeModal(){$('modal').classList.add('hidden');$('modal').classList.re
 const alertBox=(t,m,e='✨')=>modal(`<div class="text-center"><div class="text-4xl mb-2">${e}</div><h3 class="text-base font-black text-amber-300 mb-2">${t}</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-slate-700 whitespace-pre-line">${m}</p><button onclick="closeModal()" class="bg-amber-500 text-slate-950 font-black px-6 py-1.5 rounded">확인</button></div>`);
 function log(t,c='text-slate-200'){state.logs.unshift(`<div class="text-[10.5px] leading-snug ${c}">• [${state.age}세 ${state.quarter}분기] ${t}</div>`);state.logs=state.logs.slice(0,40);$('bottomLogTicker').innerHTML=state.logs.slice(0,2).join('')}
 // ===== 2D 룸 =====
-const cv=$('roomCanvas'),cx=cv.getContext('2d');let ra={t:0,hx:.4,hd:1,wx:.7,wd:-1,icon:'📈',bub:'25세·20턴 승부!',pt:[]};
+const cv=$('roomCanvas'),cx=cv.getContext('2d');let ra={t:0,hx:.4,hd:1,wx:.7,wd:-1,icon:'📈',bub:'25세 청년창업!',pt:[]};
 function parts(e,n=6){for(let i=0;i<n;i++)ra.pt.push({x:.3+R()*.4,y:.65,vy:-.008-R()*.008,vx:(R()-.5)*.008,a:1,e})}
 function rsz(){const r=cv.parentElement.getBoundingClientRect();cv.width=Math.max(140,Math.floor(r.width));cv.height=Math.max(100,Math.floor(r.height))}
 addEventListener('resize',rsz);setTimeout(rsz,60);
 function stage(){const n=state.cash-state.debt;return n>=5e9?[5,'🏰 5단계: 100억 골든 펜트하우스','#3b1d06','#271203','#facc15']:n>=1e9?[4,'🌆 4단계: 강남 사옥 VIP 룸','#2e1065','#1e1b4b','#c084fc']:n>=1e8?[3,'🏢 3단계: 테헤란로 오피스','#0f2942','#091929','#38bdf8']:n>=15e6?[2,'🔬 2단계: AI·7대사업 스튜디오','#113835','#092220','#34d399']:[1,'🏠 1단계: 월세 옥탑방 사무실','#1e293b','#0f172a','#94a3b8']}
-// ===== 🎭 표정 인물화 (주인공·아내·첩) =====
+// ===== 🎭 표정 인물화 (주인공·아내) =====
 const MOOD={h:{m:null,u:0},w:{m:null,u:0}};
 function mood(who,m,ms=2500){MOOD[who]={m,u:Date.now()+ms}}
 function heroMood(){const o=MOOD.h;if(o.m&&o.u>Date.now())return o.m;const s=state,n=s.cash-s.debt;if(s.stress>=90)return'panic';if(s.stress>=70)return'stress';if(s.stress>=50)return'tired';if(s.debt>5e7&&s.debt>s.cash*2)return'sad';if(s.stress<=20&&n>=1e8)return'joy';if(s.stress<=35)return'happy';return'neutral'}
@@ -393,4 +377,673 @@ const S3={ok:false,t:0,tm:0,ph:0,mode:'idle',run:false,res:null,fx:[],anim:[],np
   else if(cat===3){B(.8,1,.6,0x7c2d12,-.4,.5,-1.6);M(new T.CylinderGeometry(.04,.04,2.4,6),0xe5e7eb,1.6,1.2,-1.4);B(.7,.4,.05,0xef4444,1.95,2.2,-1.4);[[.4,-1],[1.6,-.4],[.9,.6]].forEach((p,i)=>me.npc(p[0],p[1],i))}
   else if(cat===4){B(3,1,.8,0x7c2d12,0,.5,-1.8);B(3.1,.08,.9,0xe5e7eb,0,1.04,-1.8);for(let i=0;i<3;i++)M(new T.CylinderGeometry(.12,.1,.2,10),0xf8fafc,-.8+i*.5,1.18,-1.7);B(.9,.5,.7,0x475569,1.9,.25,-1.8);for(let i=0;i<3;i++){const s=M(new T.SphereGeometry(.14,8,8),0xe5e7eb,1.9,1.6,-1.8);A(t=>{const u=(t*.8+i/3)%1;s.position.y=1.2+u*1.2;s.scale.setScalar(1-u*.6)})}}
   else if(cat===5){B(.35,4.5,.35,0xf59e0b,1.4,2.25,-2.6);B(3.6,.3,.3,0xf59e0b,.1,4.4,-2.6);const hk=B(.25,.25,.25,0x94a3b8,-1.2,3.2,-2.6);A(t=>{hk.position.y=3.2-Math.abs(Math.sin(t*.8))*1.4});for(let i=0;i<4;i++)B(.5,.25,.3,0xb45309,-.4+(i%2)*.55,.13+Math.floor(i/2)*.26,-1.2);B(.12,2.4,.12,0x9ca3af,-1.6,1.2,-1.8);B(.12,2.4,.12,0x9ca3af,.6,1.2,-1.8);B(2.3,.1,.12,0x9ca3af,-.5,2.2,-1.8)}
-  else if(cat===6){const cv=document.createElement('canvas');cv.width=256;cv.height=128;const x=cv.getContext('2d');x.fillStyle='#14532d';x.fillRect(0,0,256,128);x.fillStyle='#fff';x.font='bold 28px sans-serif';x.fillText('🎓 8대 전문교육',20,55);x.fillText('잠금해제 · 숙련↑',25,100);const b=new T.Mesh(new T.PlaneGeometry(3,1.5),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv)}));b.position.set(0,2.4,-4.4);g.add(b);for(let i=0;i<3;i++){B(.9,.08,.6,0x92400e,-1+i*1.2,.75,-.6);B(.08,.75,.08,0x78350f,-1+i*1.2,.37,-.6);
+  else if(cat===6){const cv=document.createElement('canvas');cv.width=256;cv.height=128;const x=cv.getContext('2d');x.fillStyle='#14532d';x.fillRect(0,0,256,128);x.fillStyle='#fff';x.font='bold 28px sans-serif';x.fillText('🎓 8대 전문교육',20,55);x.fillText('잠금해제 · 숙련↑',25,100);const b=new T.Mesh(new T.PlaneGeometry(3,1.5),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv)}));b.position.set(0,2.4,-4.4);g.add(b);for(let i=0;i<3;i++){B(.9,.08,.6,0x92400e,-1+i*1.2,.75,-.6);B(.08,.75,.08,0x78350f,-1+i*1.2,.37,-.6);me.npc(-1+i*1.2,-1.5,i)}}
+  else if(cat===7){const cv=document.createElement('canvas');cv.width=64;cv.height=128;const x=cv.getContext('2d');x.fillStyle='#475569';x.fillRect(0,0,64,128);for(let r=0;r<8;r++)for(let c=0;c<4;c++){x.fillStyle=(r*3+c*5)%4?'#fde68a':'#1e293b';x.fillRect(6+c*15,6+r*15,9,9)}const tx=new T.CanvasTexture(cv);[[-1.6,2.4,1.1],[0,3.6,1.3],[1.7,2.8,1.1]].forEach(p=>{const m=new T.Mesh(new T.BoxGeometry(p[2],p[1],p[2]),new T.MeshLambertMaterial({map:tx}));m.position.set(p[0],p[1]/2,-2.2);g.add(m)})}
+  else if(cat===8){B(2.2,.9,.9,0x111827,0,.7,-1.6);B(2.1,.08,.5,0xf8fafc,0,1.18,-1.2);[['🎵',-.8],['🎶',0],['🎵',.8]].forEach((n,i)=>{const s=me.sprite(n[0],.7);g.add(s);A(t=>{const u=(t*.5+i/3)%1;s.position.set(n[1]+Math.sin(t+i)*.3,1.6+u*1.6,-1.4)})})}
+  else if(cat===9){B(3,.1,1.2,0x1e293b,0,.05,-1.8);for(let i=0;i<5;i++){const b=B(.4,1,.4,i%2?0xef4444:0x22c55e,-1.2+i*.6,.5,-1.8);A(t=>{const h=.6+Math.abs(Math.sin(t*.9+i*1.3))*1.6;b.scale.y=h;b.position.y=.1+h/2})}}
+  else if(cat===10){for(let i=0;i<3;i++){B(.8,2.2,.7,0x1e293b,-1.2+i*1.2,1.1,-2);for(let k=0;k<4;k++){const l=B(.5,.06,.05,0x22d3ee,-1.2+i*1.2,.6+k*.4,-1.62);A(t=>{l.visible=Math.sin(t*3+i+k*1.7)>-.3})}}const rg=M(new T.TorusGeometry(.7,.06,8,24),0x22d3ee,0,3.1,-1.2);A(t=>{rg.rotation.x=t;rg.rotation.y=t*.7})}
+  else if(cat===11){for(let i=0;i<3;i++){const x=-1.8+i*1.5;M(new T.CylinderGeometry(.12,.15,1,8),0x78350f,x,.5,-2.4);M(new T.ConeGeometry(.7,1.8,10),0x16a34a,x,1.8,-2.4)}M(new T.CylinderGeometry(1.2,1.2,.05,20),0x38bdf8,.4,.03,-.6);const sn=me.sprite('☀️',1.2);sn.position.set(2,4,-3);g.add(sn)}
+  else{desk(1,-1.6);B(.9,.6,.08,0x0ea5e9,1,1.35,-1.9);const bl=M(new T.SphereGeometry(.28,12,12),0xfde047,2.3,2.6,-1.5);A(t=>{bl.position.y=2.6+Math.sin(t*2)*.15});for(let i=0;i<3;i++)B(.5,.04,.7,0xf8fafc,.3+i*.5,.93,-1.4)}},
+ setWife(){const id=state.marriedWifeId;if(id===this.wid){return}this.wid=id;if(this.wife){this.sc.remove(this.wife.g);this.wife=null}if(id===null)return;this.wife=this.char({kind:'w',skin:0xfde0c8,hair:HEXN(HAIRC[id]),cloth:HEXN(W[id][2])});this.wife.g.position.set(-.2,0,0);this.sc.add(this.wife.g)},
+ begin(){this.run=true;if(!this.ok)return;setLeftTab(0,true);this.hero.g.position.x=-7;this.mode='walk'},
+ end(){this.run=false;this.mode='idle';this.res=null;setLeftTab(leftTab)},
+ month(it,m){if(!this.ok)return;this.setCat(it.cat);this.iconSp.material.map=this.emo(it.icon);this.iconSp.material.needsUpdate=true;if(this.mode!=='walk')this.mode='work';this.tm=0;this.res=null;$('sceneCap').textContent=`${it.icon} ${it.name} · ${m+1}개월차`},
+ done(it){const good=!!it.gain||!!it.edu,hard=(it.st&&it.st.stress||0)>=10;mood('h',state.stress>=70?'stress':good?'joy':'focus',1000);if(state.marriedWifeId!==null)mood('w',state.stress>=70?'shock':good?'joy':'happy',1000);if(!this.ok)return;this.res={good,hard,fired:false}},
+ fxAdd(e,x,y){const s=this.sprite(e,.6);s.position.set(x+(Math.random()-.5)*.8,y,.5);this.sc.add(s);this.fx.push({s,l:1.2})},
+ update(now){if(!this.ok||$('pane3d').classList.contains('hidden'))return;const dt=Math.min(.05,(now-(this.last||now))/1000);this.last=now;this.t+=dt;this.tm+=dt;const t=this.t,h=this.hero;this.setWife();
+  if(this.mode==='walk'){this.ph+=dt*12;h.g.position.x+=dt*6;if(h.g.position.x>=this.wid){h.g.position.x=this.wid;this.mode=this.run?'work':'idle'}}
+  if(this.res&&!this.res.fired&&this.tm>.55){this.res.fired=true;this.mode='cheer';this.cheerEnd=t+.45;const px=this.hero.g.position.x;if(this.res.good)for(let i=0;i<4;i++)this.fxAdd('🪙',px,2.8);if(this.res.hard)this.fxAdd('💦',px,3);}
+  if(this.mode==='cheer'&&t>this.cheerEnd)this.mode=this.run?'work':'idle';
+  const sick=heroMood()==='sick',hm=sick?'sick':this.mode;this.pose(h,hm,t,this.ph);
+  if(this.wife){const wm=sick||wifeMood()==='shock'?'sick':this.mode==='cheer'?'cheer':'idle';this.pose(this.wife,wm,t+1,0)}
+  if(!this.fc||t-this.fc>.12){this.fc=t;this.face(h,heroMood(),t);if(this.wife)this.face(this.wife,wifeMood(),t);const gc=state.age>=45?0xcbd5e1:state.age>=38?0x6b7280:0x1f2937;h.hair.material.color.setHex(gc)}
+  this.iconSp.position.set(h.g.position.x,3.45+Math.sin(t*3)*.08,0.3);this.npcs.forEach((n,i)=>{n.g.position.y=Math.abs(Math.sin(t*2+i))*.06});this.anim.forEach(f=>f(t));
+  for(let i=this.fx.length-1;i>=0;i--){const f=this.fx[i];f.l-=dt;f.s.position.y+=dt*1.3;f.s.material.opacity=Math.max(0,f.l);if(f.l<=0){this.sc.remove(f.s);this.fx.splice(i,1)}}
+  this.r.render(this.sc,this.cam)}};
+addEventListener('resize',()=>S3.resize());
+
+function drawRoom(){requestAnimationFrame(drawRoom);ra.t+=.05;const w=cv.width,h=cv.height,st=stage();$('roomStageTitle').textContent=st[1];cx.clearRect(0,0,w,h);
+ cx.fillStyle=st[2];cx.fillRect(0,0,w,h*.72);cx.fillStyle=st[3];cx.fillRect(0,h*.72,w,h*.28);cx.strokeStyle=st[4];cx.lineWidth=2;cx.beginPath();cx.moveTo(0,h*.72);cx.lineTo(w,h*.72);cx.stroke();
+ if(st[0]>=3){cx.fillStyle='#040b16';cx.fillRect(w*.12,h*.08,w*.76,h*.4);for(let b=0;b<8;b++){const bh=(b%3?.16:.26)*h;cx.fillStyle='#1e293b';cx.fillRect(w*(.16+b*.085),h*.48-bh,w*.06,bh)}}
+ cx.font='16px sans-serif';cx.textAlign='center';state.ownedItems.forEach((id,i)=>{const it=SHOP.find(s=>s[0]===id);if(it)cx.fillText(it[1],w*(.1+(i%4)*.26),i<4?h*.7:h*.32)});
+ {const mr=state.marriedWifeId!==null,S=Math.min(h*.15,w*(mr?.105:.15)),hx=w*(mr?.3:.5),hy=h*.34+Math.sin(ra.t*1.6)*1.5,ag=state.age;
+  if(mr){const wf=W[state.marriedWifeId],wx=w*.7;drawPerson(cx,wx,h*.35+Math.cos(ra.t*1.6)*1.5,S*.95,{kind:'w',mood:wifeMood(),skin:'#fde0c8',hair:HAIRC[state.marriedWifeId],style:WSTYLE[state.marriedWifeId],cloth:wf[2]},ra.t);cx.font='bold 10px sans-serif';cx.fillStyle='#fbcfe8';cx.textAlign='center';cx.fillText(wf[0]+' '+wf[1].split(' ')[0]+(isSpecialWife(state.marriedWifeId)?`(${state.specialTurns}분기)`:state.wifeGrudge?'(💢냉전중)':''),wx,h-4)}
+  drawPerson(cx,hx,hy,S,{kind:'h',mood:heroMood(),skin:'#f2c9a0',hair:ag>=45?'#cbd5e1':'#1f2937',gray:ag>=38&&ag<45?'#9ca3af':null,cloth:st[0]>=4?'#78350f':st[0]>=3?'#1e3a8a':'#334155'},ra.t);
+  cx.font='bold 10px sans-serif';cx.fillStyle='#fde68a';cx.textAlign='center';cx.fillText(ag+'세 주인공',hx,h-4);if(!mr){cx.font='9px sans-serif';cx.fillStyle='#f9a8d4';cx.fillText(state.runawayWifeId!==null?`🏃‍♀️ ${W[state.runawayWifeId][1].split(' ')[0]} 가출중 (인연센터 복귀 가능)`:'💍 인연을 만나면 아내가 함께 나와요',hx,h*.07)}
+  const bt=(state.stress>=80?'과로 위험!🚑':ra.bub).slice(0,10);cx.fillStyle='#0f172ae0';cx.strokeStyle=state.stress>=80?'#ef4444':'#38bdf8';cx.fillRect(hx-44,h*.82-S*.3,88,15);cx.strokeRect(hx-44,h*.82-S*.3,88,15);cx.fillStyle='#e0f2fe';cx.font='9px sans-serif';cx.fillText(ra.icon+' '+bt,hx,h*.82-S*.3+11)}
+ for(let i=ra.pt.length-1;i>=0;i--){const p=ra.pt[i];p.x+=p.vx;p.y+=p.vy;p.a-=.02;if(p.a<=0){ra.pt.splice(i,1);continue}cx.globalAlpha=p.a;cx.font='14px sans-serif';cx.fillText(p.e,w*p.x,h*p.y);cx.globalAlpha=1}}
+drawRoom();
+// ===== 스케줄 보드 =====
+function toggleView(){viewAll=!viewAll;board()}
+function pickCat(c){curCat=c;viewAll=false;board()}
+function lockWhy(s){
+ if(!s)return '';
+ if(s.cat===10){
+  const missing=getAiStatus().filter(x=>!x.ok).map(x=>`${x.label} ${x.req}(현 ${x.cur})`);
+  const curBiz=(state.edu&&state.edu.biz)||0;
+  if(s.reqEdu>30&&curBiz<s.reqEdu){
+   missing.push(`📈사업교육 ${s.reqEdu}(현 ${curBiz})`);
+  }
+  return missing.length?`AI 해금 조건 미달: ${missing.join(' · ')}`:'';
+ }
+ if(!s.reqEdu||!s.eduKey)return '';
+ const cur=(state.edu&&state.edu[s.eduKey])||0;
+ if(cur<s.reqEdu){
+  const m=EDU_META[s.eduKey];
+  return `🎓 ${m.icon}${m.name} ${s.reqEdu}점 필요 (현재 ${cur}점)`;
+ }
+ return '';
+}
+function board(){
+ $('btnView').textContent=viewAll?'📂':'🔍';
+ const aiOk=isAiUnlocked();
+ $('tabs').innerHTML=CATS.map(([n,c])=>{
+  const lbl=(c===10&&!aiOk)?'🔒🤖AI':n;
+  return `<button onclick="pickCat(${c})" class="hb px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${c===0?'bg-amber-600 text-slate-950':c===6?'bg-emerald-800 text-emerald-100 border border-emerald-400':c===10?(aiOk?'bg-cyan-900 text-cyan-100 border border-cyan-400':'bg-slate-900 text-rose-300 border border-rose-500/70'):c===11?'bg-pink-900 text-pink-200 border border-pink-500':'bg-slate-800 text-slate-300'} ${!viewAll&&c===curCat?'ring-2 ring-amber-400':''}">${lbl}</button>`;
+ }).join('');
+ const b=$('board');if(!viewAll&&curCat===0)return deptBoard();
+ const sortedSC=[...SC].sort((a,b)=>(CAT_ORDER.indexOf(a.cat)-CAT_ORDER.indexOf(b.cat))||(a.idx-b.idx));
+ const list=viewAll?sortedSC:SC.filter(s=>s.cat===curCat);
+ if(viewAll){
+  b.className='flex-1 min-h-0 overflow-hidden p-0.5 grid grid-cols-10 grid-rows-9 gap-1';
+  b.innerHTML=`<button class="tile" title="백화점" onclick="pickCat(0)"><span class="text-base">🏬</span><span class="text-[8px] text-amber-300 font-black">백화점</span></button>`+list.map(s=>{
+   const L=lvOf((state.lv||{})[s.id]||0),lw=lockWhy(s),lk=!!lw;
+   return `<button class="tile ${lk?'off':''}" title="${s.name} · ${tag(s)}${lk?' · 🔒 '+lw:''}" onclick="addQ(${s.id})"><span class="text-base">${lk?'🔒':s.icon}</span><span class="text-[8px] font-black ${lk?'text-rose-300':'text-emerald-400'}">${lk?(s.cat===10?'AI잠김':s.reqEdu):'Lv'+L}</span></button>`;
+  }).join('');
+  return;
+ }
+ const aiBanner=(curCat===10)?`<div class="col-span-2 md:col-span-4 bg-slate-900/95 border ${aiOk?'border-emerald-400':'border-rose-500/80'} rounded-lg px-2.5 py-1.5 flex flex-col justify-between shrink-0">
+  <div class="flex justify-between items-center"><span class="text-[11px] font-black ${aiOk?'text-emerald-300':'text-amber-300'}">${aiOk?'🔓 🤖AI 스케줄 잠금 해제 완료! 모든 무자본 AI 사업을 가동할 수 있습니다.':'🔒 상단 [🤖AI] 스케줄 잠금 해제 조건 (7가지 모두 달성 시 해금)'}</span><span class="text-[10px] font-bold text-sky-300">${getAiStatus().filter(x=>x.ok).length}/7 달성</span></div>
+  <div class="grid grid-cols-7 gap-1 mt-1">${getAiStatus().map(x=>`<div class="px-1.5 py-0.5 rounded text-[9.5px] font-bold text-center border ${x.ok?'bg-emerald-950/90 border-emerald-400 text-emerald-200':'bg-slate-950 border-slate-700 text-rose-300'}">${x.ok?'✅':'🔒'} ${x.label}<br><b>${x.cur}/${x.req}</b></div>`).join('')}</div>
+ </div>`:'';
+ b.className='flex-1 min-h-0 overflow-y-auto p-1 grid grid-cols-2 md:grid-cols-4 gap-2 content-start';
+ b.innerHTML=aiBanner+list.map(s=>{
+  const L=lvOf((state.lv||{})[s.id]||0),lw=lockWhy(s),lk=!!lw;
+  const eduBadge=s.edu?`<span class="text-[9.5px] font-bold text-emerald-300">보유:${(state.edu&&state.edu[s.edu])||0}점</span>`:s.eduKey?`<span class="text-[9.5px] text-sky-300">${EDU_META[s.eduKey].icon}${(state.edu&&state.edu[s.eduKey])||0}</span>`:'';
+  return `<button class="tile big ${lk?'off':''}" style="min-height:118px" onclick="addQ(${s.id})"><div class="flex justify-between"><span class="text-2xl">${lk?'🔒':s.icon}</span><span class="text-xs font-black text-emerald-400 bg-slate-950 px-2 py-0.5 rounded">${state.marriedWifeId===8&&s.cat===6?'무료(배우자)':tag(s)}</span></div><div class="flex justify-between items-center mt-1"><span class="text-xs font-black text-amber-300 truncate">${s.name}</span>${eduBadge}</div><div class="flex gap-0.5 my-0.5">${[1,2,3,4,5].map(i=>`<i class="h-1 flex-1 rounded ${i<=L?'bg-amber-400':'bg-slate-700'}"></i>`).join('')}</div><div class="text-[10px] ${lk?'text-rose-300 font-bold':'text-slate-300'} border-t border-slate-800 pt-1 leading-tight">${lk?'🔒 '+lw:'Lv.'+L+'/5 · '+(s.note?s.note+'<br>':'')+sub(s)}</div></button>`;
+ }).join('');
+}
+function deptBoard(){const b=$('board'),inv=state.inv||{},cnt=Object.values(inv).reduce((a,v)=>a+v,0),dc=state.marriedWifeId===0?.9:1,GL={f:'👩 여성용',u:'👫 공용',m:'👨 남성용'};b.className='flex-1 min-h-0 overflow-y-auto p-1';
+ b.innerHTML=`<div class="flex justify-between items-center text-[11px] mb-1 gap-1"><b class="text-amber-300">🏬 VIP 백화점 — 명품 ${DEPT.length}선${dc<1?' (비비안 10% 할인)':''}</b><span class="text-pink-300 text-right">🎁 보관함 ${cnt}개 · 여성 선물=💍인연센터 · 남성 선물=<button class="bg-sky-700 text-white px-1.5 rounded font-black" onclick="openVipList()">🤝거래처 선물</button></span></div>`+DG.map((g,gi)=>`<div class="text-[11px] font-black text-sky-300 mt-1.5">${g[0]} ${g[1]} <span class="text-[9px] text-slate-400">${GL[GG[gi]]}</span></div><div class="grid grid-cols-5 gap-1">`+DEPT.filter(d=>d.g===gi).map(d=>`<button class="tile ${state.cash<d.p*dc?'off':''}" style="align-items:center;text-align:center;min-height:96px" onclick="buyDept(${d.id})">${inv[d.id]?`<span class="self-end text-[9px] bg-pink-600 rounded px-1">x${inv[d.id]}</span>`:'<span class="h-3"></span>'}<span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[10px] font-bold text-amber-200 truncate w-full">${d.n}</span><span class="text-[10px] text-emerald-400 font-black">${won(Math.floor(d.p*dc))}</span></button>`).join('')+'</div>').join('')}
+function buyDept(id){const d=DEPT[id],p=Math.floor(d.p*(state.marriedWifeId===0?.9:1));if(state.cash<p)return log(`💸 ${d.n}: 현금 부족 (${won(p)} 필요)`,'text-rose-300');state.cash-=p;state.inv=state.inv||{};state.inv[id]=(state.inv[id]||0)+1;
+ const c0=state.candidates[0];if(!c0.met){c0.met=true;log('💘 백화점 VIP 라운지에서 비비안을 만났습니다!','text-pink-300 font-bold')}sfxCoin();log(`🏬 ${d.n} 구매 (-${won(p)}) — 인연 센터에서 선물하세요!`,'text-pink-300');ui();board()}
+// ===== 🎁 선물 조합 =====
+let gsel=[];
+const pMarry=(i,da=0,dg=0)=>{const c=state.candidates[i];return cl(.08+Math.min(100,c.affection+da)*.004+((c.gs||0)+dg)*.02,.05,.95)};
+function giftCalc(hi,ids){return giftCalcP(PREF[hi],ids)}
+function giftCalcP(pf,ids){const gs=new Set(ids.map(i=>DEPT[i].g));let pts=0;ids.forEach(i=>{const d=DEPT[i];pts+=Math.max(2,(Math.log10(d.p)-4)*3.5)*(pf.includes(d.g)?1.8:1)});
+ const combo=1+.25*(gs.size-1),perfect=pf.every(g=>gs.has(g))?1.3:1;return{aff:Math.round(pts*combo*perfect),combo,perfect,types:gs.size}}
+function openGift(hi){const _c=state.candidates[hi];if(_c.lock>0)return alertBox('만날 수 없음','청혼을 거절당해 이번 분기에는 만날 수 없습니다.','💔');gsel=[];const inv=state.inv||{},w=W[hi],got=_c.got||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='m');
+ modal(`<h2 class="text-base font-black text-pink-300 mb-1">🎁 ${w[0]} ${w[1]}에게 선물 (최대 3개 조합)</h2><p class="text-[11px] text-slate-300 mb-2">취향: ${PREF[hi].map(g=>DG[g][0]+DG[g][1]).join(' · ')} — 서로 다른 분야를 조합하고 취향 두 분야를 모두 맞추면 호감도·청혼확률이 크게 오릅니다. <b class="text-amber-300">이미 준 선물(💝)은 다시 줄 수 없어요.</b></p><div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
+ +(items.length?items.map(d=>{const g1=got.includes(d.id);return `<button ${g1?'disabled':''} id="gi${d.id}" onclick="toggleGift(${hi},${d.id})" class="tile ring-amber-400 ${g1?'off':''}" style="align-items:center;text-align:center;min-height:100px"><span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[11px] font-bold text-amber-200">${d.n}</span><span class="text-[10px] text-slate-400">${g1?'💝 이미 선물함':'x'+inv[d.id]+' · '+won(d.p)}</span></button>`}).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 물건이 없습니다. 🏬백화점에서 여성·공용 선물을 구매하세요! (남성 선물은 🤝거래처 선물로)</div>')
+ +`</div><div id="giftPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendGift(${hi})" class="bg-pink-600 text-white font-black px-4 py-1.5 rounded">🎁 선물하기</button><button onclick="openRomance()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`)}
+let vsel=[];
+function openVipList(){const vp=state.vip||{};modal(`<h2 class="text-base font-black text-sky-300 mb-1">🤝 거래처 VIP 선물</h2><p class="text-[11px] text-slate-300 mb-2">남성·공용 선물을 VIP에게 전하면 <b>인맥</b>과 <b>인맥교육 능력치</b>가 오르고 스트레스가 풀려요. 같은 선물은 한 분에게 한 번만 줄 수 있어요.</p><div class="grid grid-cols-2 gap-2">`+VIPS.map((v,i)=>`<button onclick="openVip(${i})" class="tile big" style="align-items:center;text-align:center;min-height:90px"><span style="font-size:35px;line-height:1">${v[0]}</span><span class="text-xs font-black text-amber-300">${v[1]}</span><span class="text-[10px] text-slate-300">취향 ${v[2].map(g=>DG[g][0]).join('')} · 친밀도 ${vp[i]||0}</span></button>`).join('')+`</div>${X}`)}
+function openVip(vi){vsel=[];const inv=state.inv||{},v=VIPS[vi],got=((state.vgot||{})[vi])||[],items=DEPT.filter(d=>inv[d.id]&&GG[d.g]!=='f');
+ modal(`<h2 class="text-base font-black text-sky-300 mb-1">${v[0]} ${v[1]}에게 선물 (최대 3개)</h2><p class="text-[11px] text-slate-300 mb-2">취향: ${v[2].map(g=>DG[g][0]+DG[g][1]).join(' · ')} — 분야를 조합하고 취향을 맞출수록 인맥이 크게 오릅니다.</p><div class="grid grid-cols-3 gap-1.5 max-h-72 overflow-y-auto mb-2">`
+ +(items.length?items.map(d=>{const g1=got.includes(d.id);return `<button ${g1?'disabled':''} id="vi${d.id}" onclick="toggleVip(${vi},${d.id})" class="tile ${g1?'off':''}" style="align-items:center;text-align:center;min-height:100px"><span style="font-size:35px;line-height:1">${d.ic}</span><span class="text-[11px] font-bold text-amber-200">${d.n}</span><span class="text-[10px] text-slate-400">${g1?'🤝 이미 선물함':'x'+inv[d.id]+' · '+won(d.p)}</span></button>`}).join(''):'<div class="col-span-3 text-slate-400 text-center py-6">선물할 남성·공용 물건이 없습니다. 🏬백화점에서 구매하세요!</div>')
+ +`</div><div id="vipPrev" class="bg-slate-900 p-2 rounded border border-slate-700 mb-2 text-slate-200">선물을 고르세요 (0/3)</div><div class="flex justify-between"><button onclick="sendVip(${vi})" class="bg-sky-600 text-white font-black px-4 py-1.5 rounded">🎁 전달하기</button><button onclick="openVipList()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`)}
+function toggleVip(vi,id){if((((state.vgot||{})[vi])||[]).includes(id))return;const k=vsel.indexOf(id);if(k>=0)vsel.splice(k,1);else if(vsel.length<3)vsel.push(id);DEPT.forEach(d=>{const e=$('vi'+d.id);if(e)e.classList.toggle('ring-2',vsel.includes(d.id))});
+ const g=giftCalcP(VIPS[vi][2],vsel);$('vipPrev').innerHTML=vsel.length?`선택 ${vsel.length}/3 · 인맥 <b class="text-sky-300">+${Math.round(g.aff*.8)}</b> (분야 ${g.types}종 ×${g.combo.toFixed(2)}${g.perfect>1?' · 취향 완벽 ×1.3':''})`:'선물을 고르세요 (0/3)'}
+function sendVip(vi){if(!vsel.length)return;const g=giftCalcP(VIPS[vi][2],vsel),gain=Math.round(g.aff*.8);vsel.forEach(i=>{state.inv[i]--});state.vgot=state.vgot||{};state.vgot[vi]=(state.vgot[vi]||[]).concat(vsel);state.vip=state.vip||{};state.vip[vi]=(state.vip[vi]||0)+g.aff;
+ state.net=Math.min(1999,state.net+gain);state.edu=state.edu||initEdu();state.edu.net+=Math.max(5,Math.round(gain*.3));state.stress=Math.max(0,state.stress-Math.min(10,Math.round(g.aff/6)));sfxFan();parts('🤝',8);mood('h','happy',2500);log(`🤝 ${VIPS[vi][1].split(' ')[0]}에게 선물 전달! 인맥 +${gain}${g.perfect>1?' (취향 완벽!)':''}`,'text-sky-300 font-bold');ui();openVipList()}
+function toggleGift(hi,id){if((state.candidates[hi].got||[]).includes(id))return;const k=gsel.indexOf(id);if(k>=0)gsel.splice(k,1);else if(gsel.length<3)gsel.push(id);DEPT.forEach(d=>{const e=$('gi'+d.id);if(e)e.classList.toggle('ring-2',gsel.includes(d.id))});
+ const g=giftCalc(hi,gsel);$('giftPrev').innerHTML=gsel.length?`선택 ${gsel.length}/3 · 호감도 <b class="text-pink-300">+${g.aff}</b> (분야 ${g.types}종 ×${g.combo.toFixed(2)}${g.perfect>1?' · 취향 완벽 ×1.3':''}) → 청혼 성공확률 <b class="text-amber-300">${Math.round(pMarry(hi,g.aff,g.aff/10)*100)}%</b>`:'선물을 고르세요 (0/3)'}
+function sendGift(hi){if(!gsel.length)return;const g=giftCalc(hi,gsel),c=state.candidates[hi];gsel.forEach(i=>{state.inv[i]--});c.got=(c.got||[]).concat(gsel);c.met=true;c.affection=Math.min(100,c.affection+g.aff);c.gs=(c.gs||0)+g.aff/10;
+ if(state.marriedWifeId===hi){state.spouseHappiness=Math.min(100,state.spouseHappiness+Math.round(g.aff/2));if(state.wifeGrudge){state.wifeGrudge=false;log(`💖 명품 선물로 ${W[hi][1].split(' ')[0]}님의 가출 뒤끝(냉전)이 완전히 풀렸습니다!`,'text-emerald-300 font-black')}}
+ sfxFan();parts('🎁',8);log(`🎁 ${W[hi][1].split(' ')[0]}에게 선물 조합 성공! 호감도 +${g.aff}${g.perfect>1?' (취향 완벽!)':''}`,'text-pink-300 font-bold');ui();openRomance()}
+// ===== 스케줄 예약 및 잠금 검증 =====
+function addQ(id){
+ if(busy)return;
+ const s=SC[id],w=lockWhy(s);
+ if(w){
+  sfxAlarm();
+  log(`🔒 [${s.name}] 잠김: ${w}`,'text-amber-300 font-bold');
+  return alertBox('🔒 잠긴 스케줄입니다!',`[${s.icon} ${s.name}] 스케줄은 현재 잠겨 있어 예약할 수 없습니다.\n\n• 해제 조건: ${w}\n• 해결 방법: [🎓교육] 탭에서 해당 분야 교육을 수강하고 능력치를 달성하면 잠금이 해제됩니다!`,'🔒');
+ }
+ const q=state.queue,i=q.indexOf(null);q[i===-1?2:i]=id;tone(540,'triangle',.07,.05);slots();
+}
+function rmQ(i){if(!busy){state.queue[i]=null;slots()}}
+function fillPreset(a){
+ if(busy||!Array.isArray(a))return;
+ const lockedNames=[];
+ const cleaned=a.map(id=>{
+  if(id===null||id===undefined||!SC[id])return null;
+  const w=lockWhy(SC[id]);
+  if(w){lockedNames.push(`${SC[id].name} (${w})`);return null;}
+  return id;
+ });
+ state.queue=cleaned;
+ if(lockedNames.length){
+  sfxAlarm();
+  log(`🔒 잠긴 스케줄 제외됨: ${lockedNames.join(', ')}`,'text-amber-300');
+  alertBox('🔒 잠긴 세부 스케줄 제외 안내',`프리셋 중 아직 잠금 해제되지 않은 스케줄은 예약에서 제외되었습니다.\n\n${lockedNames.map(x=>'• '+x).join('\n')}\n\n[🎓교육] 탭에서 교육을 수강하고 조건을 달성해 먼저 잠금을 해제해 주세요!`,'🔒');
+ }else{
+  sfxCoin();
+ }
+ slots();
+}
+function slots(){
+ let sum=0;
+ $('qSlots').innerHTML=[0,1,2].map(i=>{
+  const id=state.queue[i],s=SC[id];
+  if(s&&lockWhy(s)){state.queue[i]=null;return `<div onclick="rmQ(${i})" class="qs flex flex-col items-center justify-center p-1 text-center"><span class="text-[8.5px] text-slate-400">${i+1}개월차</span><span class="text-base">➕</span><span class="text-[9.5px] font-bold text-slate-300 truncate w-full">선택</span></div>`;}
+  if(s)sum+=(state.marriedWifeId===8&&s.cat===6)?0:s.cost;
+  return `<div onclick="rmQ(${i})" class="qs ${s?'f':''} flex flex-col items-center justify-center p-1 text-center"><span class="text-[8.5px] text-slate-400">${i+1}개월차</span><span class="text-base">${s?s.icon:'➕'}</span><span class="text-[9.5px] font-bold text-slate-300 truncate w-full">${s?s.name:'선택'}</span></div>`;
+ }).join('');
+ $('queueCostSum').textContent=`(비용: ${won(sum)})`;
+}
+// ===== 병원 (과로 입원 & 가출한 와이프 복귀 시 응급실행 공통 처리) =====
+function hospital(src,customMsg){
+ sfxAlarm();state.cash-=15e6;if(state.cash<0){state.debt+=-state.cash;state.cash=0}
+ ['tech','biz','art','net'].forEach(k=>state[k]=Math.max(5,state[k]-5));
+ state.stress=30;state.hospitalCount++;
+ if(state.marriedWifeId!==null)state.spouseHappiness=Math.max(20,state.spouseHappiness-20);
+ ra.icon='🚑';ra.bub='응급실 입원중!';
+ log(`🚑 [응급실 강제 입원!] '${src}' — 입원비 -1,500만, 4대 스탯 -5`,'text-rose-400 font-black');
+ modal(`<div class="scold-box text-center"><div class="text-5xl mb-2">🚑💥</div><h2 class="text-lg font-black text-rose-300 mb-2">대학병원 VIP 응급실 강제 입원!</h2><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-red-500/50 text-left whitespace-pre-line">${customMsg||`[${src}] 수행 중 스트레스 100으로 쓰러졌습니다!\n• 남은 분기 스케줄 전부 취소\n• 입원비 -1,500만 원 (부족하면 대출 전환)\n• 4대 스탯 -5, 배우자 행복도 하락\n※ 🏖️힐링을 적절히 섞어 건강을 관리하세요!`}</p><button onclick="closeModal()" class="bg-amber-500 text-slate-950 font-black px-6 py-2 rounded">퇴원 후 정신 차리기 (스트레스 30)</button></div>`);
+ ui();
+}
+// ===== 가출한 와이프 복귀 처리 (제니퍼·유하은이 없을 때 돌아오면 주인공 응급실행 + 뒤끝 냉전 상태 돌입!) =====
+function returnRunawayWife(){
+ if(state.runawayWifeId===null||state.runawayWifeId===undefined)return;
+ if(isSpecialWife(state.marriedWifeId)){
+  sfxAlarm();
+  return alertBox('🏃‍♀️ 복귀 불가 (특수 동거 중)',`아직 ${W[state.marriedWifeId][1].split(' ')[0]}님과 동거 중이라 가출한 와이프가 돌아오지 않습니다!\n동거가 끝난 뒤에 돌아올 수 있습니다.`,'🚫');
+ }
+ const rwId=state.runawayWifeId,rw=W[rwId];
+ state.marriedWifeId=rwId;
+ state.runawayWifeId=null;
+ state.spouseHappiness=55;
+ state.wifeGrudge=true;
+ state.reconciled=true;
+ parts('💢',10);parts('🚑',8);
+ mood('h','sick',6000);mood('w','angry',6000);
+ log(`🏠💥 가출했던 아내 [${rw[1]}] 복귀 완료! 분노의 응징으로 주인공은 응급실로 실려 가며 '💢뒤끝(냉전)' 상태가 시작됩니다!`,'text-rose-400 font-black');
+ hospital(`가출했던 아내 ${rw[1]}의 복귀 응징`,`🏠💥 가출했던 아내 [${rw[0]} ${rw[1]}]님이 집으로 돌아왔습니다!\n\n"${rw[1].split(' ')[0]}: 감히 날 두고 다른 여자랑 살림을 차려?! 오늘 병원 신세 좀 져봐라!! 🤬💥"\n\n• 가출했던 아내 [${rw[1]}] 복귀 완료 (주인공 응급실 강제 입원! 치료비 -1,500만 & 4대 스탯 -5)\n• 💢 [뒤끝(냉전) 상태 발동]: 기념일 선물이나 백화점 명품 선물로 풀어주기 전까지 매 분기 행복도가 3배 빨리 떨어집니다!`);
+}
+// ===== 특허청 & M&A 매각 알렉스 가격 흥정 이벤트 =====
+function openPatent(){
+ const g=['C급','B급','A급','S급','★레전드'];
+ const pScore=(state.edu&&state.edu.patent)||0;
+ const mScore=(state.edu&&state.edu.music)||0;
+ const regP=patentProb(),upP=upgradeProb();
+ const isJen=(state.marriedWifeId===9);
+ const maxReg=isJen?60:30,maxUp=isJen?45:15;
+ const regUsed=!!state.patentUsedInQuarter;
+ const upUsed=!!state.patentUpUsedInQuarter;
+ const reqT=reqPatentTickets();
+ const regCnt=state.patentRegCount||0;
+ modal(`<div class="flex justify-between border-b border-slate-700 pb-2 mb-3"><div><h2 class="text-base font-black text-amber-300">📜 특허청 정식 출원 · 청구항 강화 · M&A 협상 거래소</h2><p class="text-[11px] text-slate-300">• <b>정식등록 심사</b>와 <b>특허 강화</b>는 각각 <b>1분기에 1번만</b> 가능합니다.<br>• 정식등록에 성공할 때마다 다음 심사에 필요한 티켓이 <b>+1장씩 증가</b>합니다! (현재 요구 티켓: <b class="text-amber-300">🎫${reqT}장</b>)</p></div></div>
+ ${isJen?`<div class="bg-amber-950/90 border border-amber-400 rounded-lg px-3 py-1.5 mb-2.5 flex justify-between items-center"><span class="text-amber-200 font-black text-xs">🎰 제니퍼 8분기 결혼 버프 발동 중! (남은 동거: ${state.specialTurns}분기 · 종료 시 20억 잠적 주의!)</span><span class="text-emerald-300 font-black text-xs">등록확률 2배(${regP.toFixed(1)}%) · 강화확률 3배(${upP.toFixed(1)}%)!</span></div>`:''}
+ <div class="bg-slate-900 p-3 rounded border border-sky-500/50 mb-3">
+  <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+   <div class="flex items-center gap-2">
+    <span class="font-black text-sky-300">🎫 보유 티켓: <b class="text-amber-300 text-sm">${state.patentTickets}장</b></span>
+    <span class="text-[10.5px] font-black px-2 py-0.5 rounded bg-slate-950 border border-amber-500/60 text-amber-300">📌 이번 정식등록 필요 티켓: ${reqT}장 (누적 등록성공 ${regCnt}회)</span>
+   </div>
+   <div class="flex gap-1.5 text-[11px] font-black">
+    <span class="bg-indigo-950 border border-indigo-400 px-2 py-0.5 rounded text-amber-300">🎯 등록확률: ${regP.toFixed(1)}% (최대 ${maxReg}%)</span>
+    <span class="bg-purple-950 border border-purple-400 px-2 py-0.5 rounded text-pink-200">⚡ 강화확률: ${upP.toFixed(1)}% (최대 ${maxUp}%)</span>
+   </div>
+  </div>
+  <div class="mb-2">
+   <div class="flex justify-between text-[10.5px] text-slate-300 mb-1">
+    <span>교육 점수: 💡특허교육 <b class="text-sky-300">${pScore}점</b> + 🎼작곡교육 <b class="text-purple-300">${mScore}점</b></span>
+    <span><b class="${regUsed?'text-rose-300':'text-emerald-300'}">등록심사(${regUsed?'1/1완료':'0/1가능'})</b> · <b class="${upUsed?'text-rose-300':'text-emerald-300'}">특허강화(${upUsed?'1/1완료':'0/1가능'})</b></span>
+   </div>
+   <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-700"><div class="h-full bg-gradient-to-r from-sky-500 via-purple-500 to-amber-400" style="width:${Math.min(100,(regP/maxReg*100)).toFixed(1)}%"></div></div>
+  </div>
+  <div class="flex gap-2">
+   <input id="pname" ${regUsed?'disabled':''} placeholder="${regUsed?'이번 분기 정식등록 심사를 이미 마쳤습니다 (1분기에 1번만 가능)':`티켓 ${reqT}장으로 심사 도전할 발명품/음원 이름`}" class="bg-slate-950 border border-slate-700 px-2.5 py-1.5 rounded text-white flex-1 outline-none focus:border-amber-400 ${regUsed?'opacity-50':''}" style="user-select:text">
+   <button ${regUsed?'disabled':''} onclick="regPatent()" class="${regUsed?'bg-slate-800 text-slate-500 cursor-not-allowed':'bg-sky-600 hover:bg-sky-500 text-white'} font-black px-3 py-1.5 rounded shrink-0">${regUsed?'✅ 분기 등록심사 완료(1/1)':`📜 정식등록 심사 (🎫${reqT}장·-100만·${regP.toFixed(1)}%)`}</button>
+  </div>
+ </div>
+ <div class="space-y-2 max-h-60 overflow-y-auto">`+(state.patents.length?state.patents.map((p,i)=>`<div class="bg-slate-900 border border-slate-700 p-2.5 rounded"><div class="flex justify-between items-center"><span class="bg-amber-500/20 border border-amber-400 text-amber-300 px-1.5 rounded font-black text-[10px]">${g[Math.min(4,p.level-1)]} (Lv.${p.level})</span><span class="text-sky-300 font-bold">분기 로열티 +${won(p.royalty)}</span><span class="text-emerald-400 font-black">기준 매각가 ${won(p.worth)}</span></div>
+ <div class="flex items-center gap-1.5 mt-1.5"><span class="text-white font-bold truncate flex-1">📜 ${p.name}</span><button ${upUsed?'disabled':''} onclick="upPatent(${i})" class="${upUsed?'bg-slate-800 text-slate-500 cursor-not-allowed':'bg-indigo-700 hover:bg-indigo-600 text-white'} px-2 py-1 rounded font-bold">${upUsed?'✅강화완료(1/1)':`⬆️강화 ${upP.toFixed(1)}% (${state.patentTickets>0?'🎫1장':won(p.level*4e6)})`}</button><button ${p.mature>0?'disabled':''} onclick="openSellNego(${i})" class="px-2.5 py-1 rounded font-black ${p.mature>0?'bg-slate-800 text-slate-500':'bg-emerald-500 hover:bg-emerald-400 text-slate-950'}">${p.mature>0?`⏳심사중(${p.mature}분기)`:'💰M&A 매각·흥정'}</button></div></div>`).join(''):'<div class="text-slate-400 text-center py-6 bg-slate-950 rounded border border-slate-800">등록된 특허·음원이 없습니다.</div>')+`</div>${X}`);
+}
+function regPatent(){
+ if(state.patentUsedInQuarter){
+  sfxAlarm();
+  return alertBox('📜 정식등록 심사는 1분기에 한 번만!','이번 분기에는 이미 정식등록 심사(1/1회)를 진행했습니다.\n3개월 사업 스케줄을 실행해 다음 분기가 되면 다시 심사 도전이 가능합니다!','🗓️');
+ }
+ const reqT=reqPatentTickets();
+ if(state.patentTickets<reqT){
+  sfxAlarm();
+  return alertBox('특허 출원권 티켓 부족!',`현재 정식등록 누적 성공 ${state.patentRegCount||0}회 상태이므로,\n이번 정식등록 심사를 받으려면 🎫티켓 ${reqT}장이 필요합니다! (현재 보유: ${state.patentTickets}장)\n\n※ 정식등록에 성공할수록 다음 심사에 필요한 티켓이 +1장씩 늘어납니다.`,'🚫');
+ }
+ if(state.cash<1e6)return alertBox('관납료 부족','정식 출원 관납료 100만 원이 필요합니다.','⚠️');
+ const nm=$('pname').value.trim()||`혁신 발명·음원 특허 제${state.patents.length+1}호`;
+ const prob=patentProb(),roll=R()*100;
+ state.patentUsedInQuarter=true;
+ state.patentTickets-=reqT;
+ state.cash-=1e6;
+ if(roll<prob){
+  const r=state.lastRoyalty+state.tech*35000;
+  state.passive+=r;
+  state.patents.push({name:nm,level:1,royalty:r,worth:r*4.5,mature:2});
+  state.patentRegCount=(state.patentRegCount||0)+1;
+  const nextReq=reqPatentTickets();
+  sfxFan();parts('📜',10);mood('h','joy',3500);
+  log(`🎊 [특허청 정식등록 성공!] '${nm}' (${prob.toFixed(1)}% 돌파! 티켓 ${reqT}장 사용 → 다음 등록심사 요구 티켓: ${nextReq}장)`,'text-emerald-300 font-black');
+  ui();
+  return modal(`<div class="text-center"><div class="text-5xl mb-2">🎊📜</div><h3 class="text-base font-black text-emerald-300 mb-2">특허청 정식 등록 심사 통과! (${prob.toFixed(1)}% 돌파)</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-emerald-500/50 whitespace-pre-line">축하합니다! [${nm}] 안건이 정식 심사를 통과했습니다!\n• 사용한 티켓: 🎫${reqT}장\n• 분기 로열티 패시브: +${won(r)}\n• 📌 정식등록 성공 누적(${state.patentRegCount}회)으로 다음번 정식등록 심사에는 🎫티켓 ${nextReq}장이 필요합니다!</p><button onclick="openPatent()" class="bg-amber-500 text-slate-950 font-black px-6 py-1.5 rounded">특허청으로 돌아가기</button></div>`);
+ }else{
+  sfxAlarm();parts('💦',6);mood('h','sad',3000);
+  log(`💔 [특허청 정식등록 기각] '${nm}' 심사 탈락 (티켓 ${reqT}장 소모 · 등록 확률 ${prob.toFixed(1)}%)`,'text-rose-300 font-bold');
+  ui();
+  return modal(`<div class="text-center"><div class="text-5xl mb-2">📄💦</div><h3 class="text-base font-black text-rose-300 mb-2">특허청 정식 등록 거절 (이번 분기 1/1회 심사 종료)</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-rose-500/50 whitespace-pre-line">[${nm}] 정식 출원 심사가 기각되어 티켓 ${reqT}장과 관납료 100만 원이 소모되었습니다.\n(정식등록 심사는 1분기에 1번만 가능하므로 다음 분기에 다시 도전할 수 있습니다.)\n\n• 현재 정식등록 성공 확률: ${prob.toFixed(1)}% (기본 최대 30%, 제니퍼 결혼 시 2배)</p><button onclick="openPatent()" class="bg-slate-700 hover:bg-slate-600 text-white font-black px-6 py-1.5 rounded">다시 확인하기</button></div>`);
+ }
+}
+function upPatent(i){
+ if(state.patentUpUsedInQuarter){
+  sfxAlarm();
+  return alertBox('⬆️ 특허 강화는 1분기에 한 번만!','이번 분기에는 이미 특허 강화(1/1회)를 진행했습니다.\n다음 분기에 다시 강화에 도전해 주세요!','🗓️');
+ }
+ const p=state.patents[i],c=p.level*4e6;
+ if(state.patentTickets<=0&&state.cash<c)return alertBox('강화 조건 부족',`🎫티켓 1장 또는 연구비 ${won(c)}이 필요합니다.`,'⚠️');
+ state.patentUpUsedInQuarter=true;
+ if(state.patentTickets>0)state.patentTickets--;else state.cash-=c;
+ const prob=upgradeProb(),roll=R()*100;
+ if(roll<prob){
+  p.level++;
+  const a=Math.floor(p.royalty*.5);
+  p.royalty+=a;
+  p.worth=Math.floor(p.worth*1.75);
+  state.passive+=a;
+  sfxFan();parts('⬆️',8);mood('h','joy',3000);
+  log(`⬆️ [특허 강화 성공!] '${p.name}' Lv.${p.level} 달성! (${prob.toFixed(1)}% 확률 돌파)`,'text-amber-300 font-black');
+  ui();
+  return modal(`<div class="text-center"><div class="text-5xl mb-2">⚡📜</div><h3 class="text-base font-black text-amber-300 mb-2">특허 청구항 강화 성공! (${prob.toFixed(1)}% 돌파)</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-amber-500/50 whitespace-pre-line">[${p.name}] 특허가 Lv.${p.level}(으)로 강화되었습니다!\n• 분기 로열티: +${won(p.royalty)}\n• 기준 매각 가치: ${won(p.worth)}</p><button onclick="openPatent()" class="bg-amber-500 text-slate-950 font-black px-6 py-1.5 rounded">확인</button></div>`);
+ }else{
+  sfxAlarm();parts('💦',5);mood('h','sad',2500);
+  log(`💦 [특허 강화 실패] '${p.name}' 강화 기각 (현재 강화 확률 ${prob.toFixed(1)}%)`,'text-rose-300 font-bold');
+  ui();
+  return modal(`<div class="text-center"><div class="text-5xl mb-2">💥📄</div><h3 class="text-base font-black text-rose-300 mb-2">특허 청구항 강화 실패 (이번 분기 1/1회 소모)</h3><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-rose-500/50 whitespace-pre-line">[${p.name}] 강화 심사에 실패했습니다.\n• 현재 강화 성공률: ${prob.toFixed(1)}% (기본 최대 15.0% 제한 / 제니퍼 결혼 시 3배 증가!)</p><button onclick="openPatent()" class="bg-slate-700 text-white font-black px-6 py-1.5 rounded">확인</button></div>`);
+ }
+}
+// 특허 M&A 매각 협상 미니 이벤트
+function openSellNego(i){
+ const p=state.patents[i];if(!p||p.mature>0)return;
+ const pAlex=cl(Math.round(55+((state.edu&&state.edu.biz)||0)*0.2+state.net*0.02),55,85);
+ const pBig=cl(Math.round(35+((state.edu&&state.edu.patent)||0)*0.25),35,65);
+ modal(`<h2 class="text-base font-black text-amber-300 border-b border-slate-700 pb-2 mb-3">🤝 [${p.name}] 특허 M&A 매각 & 가격 흥정</h2>
+ <p class="text-[11px] text-slate-300 mb-3">기준 매각가: <b class="text-emerald-400">${won(p.worth)}</b> (매각 시 분기 로열티 ${won(p.royalty)}은 종료되며 기술력 +12 상승)</p>
+ <div class="space-y-2">
+  <button onclick="execSellPatent(${i},0)" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 p-2.5 rounded flex justify-between items-center text-left">
+   <div><div class="font-black text-emerald-300">1️⃣ 안전 정가 매각 (성공률 100%)</div><div class="text-[10px] text-slate-300">흥정 없이 기준 매각가 100%를 즉시 현금으로 수령합니다.</div></div>
+   <span class="font-black text-emerald-400 text-sm">+${won(p.worth)}</span>
+  </button>
+  <button onclick="execSellPatent(${i},1)" class="w-full bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 p-2.5 rounded flex justify-between items-center text-left">
+   <div><div class="font-black text-rose-200">2️⃣ 라이벌 알렉스 압박 흥정 (성공률 ${pAlex}%)</div><div class="text-[10px] text-slate-300">성공 시 <b>1.4배(${won(Math.floor(p.worth*1.4))})</b> 수령 & 알렉스 자산 차감! / 실패 시 0.85배(${won(Math.floor(p.worth*.85))})</div></div>
+   <span class="font-black text-amber-300 text-sm">최대 +${won(Math.floor(p.worth*1.4))}</span>
+  </button>
+  <button onclick="execSellPatent(${i},2)" class="w-full bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-400/60 p-2.5 rounded flex justify-between items-center text-left">
+   <div><div class="font-black text-sky-200">3️⃣ 글로벌 빅테크 경매 승부수 (성공률 ${pBig}%)</div><div class="text-[10px] text-slate-300">성공 시 <b>2.0배(${won(Math.floor(p.worth*2))})</b> 잭팟! / 실패 시 0.7배(${won(Math.floor(p.worth*.7))}) & 스트레스 +10</div></div>
+   <span class="font-black text-cyan-300 text-sm">최대 +${won(Math.floor(p.worth*2))}</span>
+  </button>
+ </div>
+ <div class="flex justify-end mt-3"><button onclick="openPatent()" class="bg-slate-700 px-4 py-1.5 rounded font-bold">뒤로</button></div>`);
+}
+function execSellPatent(i,mode){
+ const p=state.patents[i];if(!p||p.mature>0)return;
+ let mult=1,msg='';
+ if(mode===1){
+  const pAlex=cl(Math.round(55+((state.edu&&state.edu.biz)||0)*0.2+state.net*0.02),55,85);
+  if(R()*100<pAlex){mult=1.4;state.rivalCash=Math.max(0,state.rivalCash-Math.floor(p.worth*.5));msg='⚔️ 라이벌 알렉스 압박 흥정 대성공! (1.4배 프리미엄 & 알렉스 자산 타격!)'}
+  else{mult=0.85;msg='💦 알렉스가 역공을 펼쳐 0.85배 가격에 타협했습니다.'}
+ }else if(mode===2){
+  const pBig=cl(Math.round(35+((state.edu&&state.edu.patent)||0)*0.25),35,65);
+  if(R()*100<pBig){mult=2.0;msg='🎊 글로벌 빅테크 경매 2.0배 잭팟 낙찰!!'}
+  else{mult=0.7;state.stress=cl(state.stress+10,0,100);msg='💦 경매 유찰 위기로 0.7배에 급매했습니다 (스트레스 +10).'}
+ }else{
+  msg='🤝 정가로 안전하게 M&A 매각을 완료했습니다.';
+ }
+ const gain=Math.floor(p.worth*mult);
+ state.cash+=gain;
+ state.passive=Math.max(0,state.passive-p.royalty);
+ state.tech+=12;
+ state.patents.splice(i,1);
+ sfxFan();parts('💰',10);
+ log(`💰 '${p.name}' M&A 매각 +${won(gain)} (${msg})`,'text-emerald-300 font-bold');
+ ui();
+ if(state.stress>=100)return hospital('특허 경매 협상 과로');
+ alertBox('💰 특허 M&A 매각 완료',`${msg}\n\n• 최종 매각 대금: +${won(gain)}\n• 기술력 +12 상승`,'💰');
+}
+// ===== 은행 / 라이벌 / 상점 / 앨범 =====
+function openBank(){modal(`<h2 class="text-base font-black text-emerald-300 border-b border-slate-700 pb-2 mb-3">🏦 대출 & 세무·경영권 방어</h2><div class="space-y-3">
+ <div class="bg-slate-900 p-3 rounded border border-emerald-500/40"><div class="flex justify-between font-bold text-emerald-300 mb-2"><span>💳 대출 잔액 (분기 이자 5%)</span><span class="text-rose-400 font-black">${won(state.debt)}</span></div><div class="grid grid-cols-2 gap-2"><button onclick="loan()" class="bg-emerald-700 text-white font-black py-1.5 rounded">💵 +2,000만 대출 (한도 2억)</button><button onclick="repay()" class="bg-sky-700 text-white font-black py-1.5 rounded">🧾 현금으로 상환</button></div></div>
+ <div class="bg-slate-900 p-3 rounded border border-slate-700"><div class="flex justify-between font-bold text-sky-300 mb-1"><span>🏛️ 세무 위험도</span><span>${state.taxAuditRisk}%</span></div><button onclick="defend('tax')" class="w-full bg-sky-800 text-white font-black py-1.5 rounded">🧾 선제 회계 감사 (-800만 / 0%)</button></div>
+ <div class="bg-slate-900 p-3 rounded border border-slate-700"><div class="flex justify-between font-bold text-rose-300 mb-1"><span>⚔️ M&A 위협도</span><span>${state.maThreatRisk}%</span></div><button onclick="defend('ma')" class="w-full bg-rose-800 text-white font-black py-1.5 rounded">🛡️ 자사주 매입 방어 (-1,500만 / 0%)</button></div></div>${X}`)}
+function loan(){if(state.debt+2e7>2e8)return alertBox('대출 한도 초과','최대 한도는 2억 원입니다.','🏦');state.debt+=2e7;state.cash+=2e7;sfxCoin();log(`🏦 사업자금 +2,000만 대출 (총 ${won(state.debt)})`,'text-amber-300');ui();openBank()}
+function repay(){if(state.debt<=0||state.cash<=0)return alertBox('상환 불가','상환할 대출이 없거나 현금이 없습니다.','🏦');const p=Math.min(state.cash,state.debt);state.cash-=p;state.debt-=p;sfxFan();log(`🧾 대출 ${won(p)} 상환`,'text-emerald-300 font-bold');ui();openBank()}
+function defend(t){const c=t==='tax'?8e6:15e6;if(state.cash<c)return;state.cash-=c;if(t==='tax')state.taxAuditRisk=0;else state.maThreatRisk=0;ui();openBank()}
+function openRival(){modal(`<div class="text-center"><div class="text-4xl mb-2">⚔️</div><h2 class="text-base font-black text-rose-300 mb-1">라이벌 알렉스 견제</h2><p class="bg-slate-900 p-3 rounded mb-3">알렉스 자산: <b class="text-rose-400">${won(state.rivalCash)}</b></p>
+ <button onclick="rival('s')" class="w-full bg-rose-900 font-bold py-2 px-3 rounded flex justify-between mb-2"><span>🕵️ 핵심 인력 스카우트 (-600만)</span><span class="text-amber-300">자산 -2,000만</span></button>
+ <button onclick="rival('c')" class="w-full bg-indigo-900 font-bold py-2 px-3 rounded flex justify-between"><span>🤝 라이선스 제휴 (-1,500만)</span><span class="text-emerald-300">기술+25, 패시브+250만</span></button>${X}</div>`)}
+function rival(t){if(t==='s'&&state.cash>=6e6){state.cash-=6e6;state.rivalCash=Math.max(0,state.rivalCash-2e7)}if(t==='c'&&state.cash>=15e6){state.cash-=15e6;state.tech+=25;state.passive+=25e5}closeModal();ui()}
+function openShop(){modal(`<div class="flex justify-between border-b border-slate-700 pb-2 mb-3"><h2 class="text-base font-black text-amber-300">🛒 명품·장비 상점 (영구 효과)</h2><span class="text-emerald-400 font-bold">현금: ${won(state.cash)}</span></div><div class="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto">`+
+ SHOP.map(s=>{const o=state.ownedItems.includes(s[0]);return `<div class="bg-slate-900 border border-slate-700 p-2.5 rounded flex flex-col justify-between"><div><div class="font-bold text-amber-300">${s[1]} ${s[2]} (${won(s[3])})</div><div class="text-[10px] text-slate-300">${s[4]}</div></div><button ${o?'disabled':''} onclick="buy('${s[0]}')" class="mt-2 py-1 rounded font-black ${o?'bg-slate-800 text-slate-500':'bg-emerald-500 text-slate-950'}">${o?'보유중':'구매하기'}</button></div>`}).join('')+`</div>${X}`)}
+function buy(id){const s=SHOP.find(x=>x[0]===id);if(state.cash<s[3]||state.ownedItems.includes(id))return;state.cash-=s[3];state.ownedItems.push(id);if(s[5])state.passive+=s[5];sfxCoin();ui();openShop()}
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}},lset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+function openAlbum(){const al=ls('pm44_album',[]),hof=ls('pm44_hof',[]);modal(`<div class="flex justify-between border-b border-slate-700 pb-2 mb-3"><h2 class="text-base font-black text-amber-300">🏆 엔딩 도감 & 가보 상속(New Game+)</h2><span class="text-amber-300 font-bold">수집률 ${Math.round(al.length/END.length*100)}%</span></div>
+ <div class="bg-indigo-950/90 border border-indigo-400 p-2.5 rounded mb-3 flex justify-between items-center gap-2"><div><div class="font-black text-amber-300">🧬 유산 계승 (New Game+)</div><div class="text-[10.5px] text-slate-200">최고 특허 1건 + 순자산 10%(최대 5억)를 물려받아 25세(40턴)부터 2회차(목표 1,000억!) 시작</div></div><button onclick="ngPlus()" class="bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded shrink-0">🧬 새 회차</button></div>
+ <div class="grid md:grid-cols-2 gap-3"><div class="grid grid-cols-2 gap-2">`+END.map((e,i)=>`<div class="bg-slate-900 border border-slate-700 p-2 rounded text-center"><div class="text-xl">${al.includes(i)?e[0]:'❓'}</div><div class="font-bold text-amber-300">${al.includes(i)?e[1]:'???'}</div><div class="text-[9.5px] text-slate-400">${e[2]}</div></div>`).join('')+`</div><div class="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1">`+(hof.length?hof.map((h,k)=>`<div>${k+1}위 ${h.i} ${h.n} · ${won(h.v)} (${h.r}회차)</div>`).join(''):'<div class="text-slate-400">기록 없음</div>')+`</div></div>${X}`)}
+function ngPlus(){const bp=state.patents.length?state.patents.reduce((a,b)=>a.royalty>b.royalty?a:b):null,ic=Math.min(5e8,Math.max(5e6,Math.floor(state.cash*.1))),nr=state.ngPlusCount+1;
+ state=init();state.ngPlusCount=nr;GOAL=1e11;state.cash=ic;if(bp){state.patents.push({...bp,mature:0});state.passive+=bp.royalty;state.patentRegCount=1}sfxFan();ui();slots();alertBox(`🧬 제${nr}회차 가보 상속`,`유산 현금 ${won(ic)}${bp?`과 가보 특허 [${bp.name}]`:''}을 물려받아 25세(40턴)부터 시작합니다!\n목표: 순자산 1,000억 원`,'🧬')}
+// ===== 인연 (유하은: +20턴 영구증가 & 2분기 동거 / 제니퍼: 8분기 동거 & 떠날 때 20억 잠적 / 본처 가출 & 복귀 시 응급실행 + 냉전) =====
+function openRomance(){
+ const m=state.marriedWifeId,used=!!state.dateUsedInQuarter,lastId=state.lastDatedId,rwId=state.runawayWifeId;
+ let b;
+ if(m!==null){
+  const w=W[m];
+  const specDesc=m===9?`🔥 특허등록 2배·강화 3배 적용 중! (⚠️ ${state.specialTurns}분기 후 떠날 때 20억 가지고 잠적!)`:m===2?`🎻 결혼 보너스 +20턴 영구 증가 완료! (${state.specialTurns}분기 후 월드투어 출국)`:state.wifeGrudge?`💢 가출 복귀 뒤끝(냉전) 상태! 기념일 선물이나 명품 선물로 풀어주세요 (방치 시 행복도 급감)`:w[5];
+  b=`<div class="flex items-center gap-3"><span class="text-3xl">${w[0]}</span><div><div class="font-black text-pink-300 text-sm">💖 현재 배우자: ${w[1]} ${isSpecialWife(m)?`<span class="text-amber-300">(⏳ 남은 동거: ${state.specialTurns}분기)</span>`:`(행복도 ${state.spouseHappiness}%${state.wifeGrudge?' · 💢냉전중':''})`}</div><div class="text-[11px] text-emerald-300">${w[4]}</div><div class="text-[11px] text-rose-300 font-bold">${specDesc}</div></div></div><button onclick="gift()" class="bg-pink-500 text-slate-950 font-black px-3 py-1.5 rounded shrink-0">🎁 기념일 선물 (-500만 / 행복+30${state.wifeGrudge?'·냉전해소':''})</button>`;
+ }else{
+  const lastPartner=(lastId!==null&&lastId!==undefined)?`${W[lastId][0]}${W[lastId][1].split(' ')[0]}`:null;
+  b=`<div><div class="font-black text-amber-300">💔 싱글 · ${used?'<span class="text-rose-300">✅ 이번 분기 데이트 완료 (1/1회)</span>':'<span class="text-emerald-300">🌹 이번 분기 데이트 가능 (0/1회)</span>'}</div><div class="text-[10.5px] text-slate-300">${used?'데이트는 1분기에 한 번만 가능합니다. 다음 분기에 다시 신청할 수 있어요!':(lastPartner?`최근 데이트 상대: <b class="text-pink-300">${lastPartner}</b> (다른 여성에게 데이트 신청 시 욕먹고 스트레스 +10!)`:'🌹 데이트는 1분기에 1번만 가능합니다! (비용 150만 원)')}</div></div><button onclick="blind()" class="bg-purple-700 text-white font-black px-3 py-1.5 rounded shrink-0">🥂 VIP 소개팅 (-100만)</button>`;
+ }
+ const runawayBanner=(rwId!==null&&rwId!==undefined)?`<div class="bg-rose-950/90 border border-rose-400 rounded-lg p-2.5 mb-3 flex justify-between items-center gap-2">
+  <div>
+   <div class="font-black text-rose-200 text-xs">🏃‍♀️ 가출한 와이프: ${W[rwId][0]} ${W[rwId][1]}</div>
+   <div class="text-[10.5px] text-slate-200">${isSpecialWife(m)?`${W[m][1].split(' ')[0]}님과 동거 중(${state.specialTurns}분기 남음)에는 돌아오지 않습니다. 동거가 끝나면 돌아올 수 있습니다!`:'특수 동거가 끝났습니다! 가출한 와이프가 돌아올 수 있습니다. (⚠️ 복귀 시 주인공은 응급실로 실려 가며 뒤끝 냉전이 시작됩니다!)'}</div>
+  </div>
+  <button ${isSpecialWife(m)?'disabled':''} onclick="returnRunawayWife()" class="${isSpecialWife(m)?'bg-slate-800 text-slate-500 cursor-not-allowed':'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'} font-black px-3 py-1.5 rounded shrink-0">${isSpecialWife(m)?'🔒 동거중 복귀불가':'🏠 가출 와이프 복귀 (🚑응급실행!)'}</button>
+ </div>`:'';
+ modal(`<h2 class="text-base font-black text-pink-300">💍 10인의 인연 & 청혼 센터 (유하은: +20턴 영구증가 / 제니퍼: 8분기 동거 후 20억 잠적)</h2><p class="text-[11px] text-slate-300 mb-2">• 기혼 상태에서도 <b>🎻유하은(+20턴 증가·2분기 동거)</b>과 <b>🎰제니퍼(특허확률 2배·강화 3배·8분기 동거 후 20억 잠적)</b>에게는 청혼할 수 있습니다! (성공 시 현재 와이프 가출)</p><div class="bg-slate-900 border border-pink-500/40 rounded p-2.5 mb-2.5 flex justify-between items-center gap-2">${b}</div>${runawayBanner}
+ <div class="grid md:grid-cols-2 gap-2.5">`+W.map((w,i)=>{
+  const c=state.candidates[i],mine=m===i,isRunaway=(rwId===i),lk=c.lock>0;
+  const specBlocked=(i===9&&state.jenniferDone)||(i===2&&state.haeunDone);
+  // 유하은(2)과 제니퍼(9)는 일반 와이프와 결혼 중(m!==null && !isSpecialWife(m))이어도 데이트·청혼 가능!
+  const canDate=(!lk&&!used&&!specBlocked&&(m===null||(isSpecialWife(i)&&!isSpecialWife(m))));
+  const canPropose=(c.met&&c.affection>=60&&!lk&&!specBlocked&&(m===null||(isSpecialWife(i)&&!isSpecialWife(m))));
+  const isOther=(lastId!==null&&lastId!==undefined&&lastId!==i);
+  const dateLabel=specBlocked?'🚫만남종료':used?'✅분기1회완료':(isSpecialWife(i)&&m!==null)?'💘몰래데이트(1/1)':(isOther?'🤬다른여자신청':'🌹데이트(1/1)');
+  const dateBtnCls=!canDate?'bg-slate-800 text-slate-500 cursor-not-allowed':(isOther||(isSpecialWife(i)&&m!==null))?'bg-rose-950 border border-rose-500 text-rose-200':'bg-slate-800 hover:bg-slate-700 text-pink-200';
+  const statusTag=mine?(isSpecialWife(i)?`⏳ 동거중(${state.specialTurns}분기)`:`💍 내 아내${state.wifeGrudge?'(💢냉전)':''}`):isRunaway?`🏃‍♀️ 가출중`:specBlocked?`✈️ 떠남(재청혼불가)`:lk?`💔 거절됨`:c.met?`❤️ ${c.affection}% (거절 ${c.rej}회)`:'🔒 미조우';
+  const propLabel=specBlocked?'🚫재청혼불가':(i===2&&m!==null)?'🎻+20턴청혼':(i===9&&m!==null)?'🎰8분기청혼':'💍청혼';
+  return `<div class="bg-slate-900 border ${mine?'border-pink-400':isRunaway?'border-rose-500':isSpecialWife(i)?'border-amber-400/70':'border-slate-700'} p-2.5 rounded-lg ${lk||specBlocked?'opacity-60':''}"><div class="flex justify-between mb-1"><span class="font-black text-white">${w[0]} ${w[1]}</span><span class="text-[10px] px-1.5 rounded bg-slate-800 text-pink-200">${statusTag}</span></div>${lk?'<div class="text-[10px] text-rose-300 font-bold">💔 청혼 거절 — 이번 분기에는 만날 수 없어요</div>':''}${isRunaway?`<div class="text-[10px] text-rose-300 font-bold">🏃‍♀️ 남편의 외도 동거에 격분해 가출 중! ${!isSpecialWife(m)?'(복귀 가능)':''}</div>`:''}<div class="text-[10.5px] text-emerald-300 font-bold">${w[4]}</div><div class="text-[10.5px] text-rose-300 font-bold">${w[5]}</div>
+ <div class="text-[10px] text-amber-300 mt-1">🎯 청혼 성공 ${Math.round(pMarry(i)*100)}% · 취향 ${PREF[i].map(g=>DG[g][0]).join('')}</div><div class="flex gap-1 mt-1 pt-1.5 border-t border-slate-800"><button ${!canDate?'disabled':''} onclick="dateW(${i})" class="flex-1 ${dateBtnCls} font-bold py-1 rounded">${dateLabel}</button><button ${lk||specBlocked?'disabled':''} onclick="openGift(${i})" class="flex-1 ${lk||specBlocked?'bg-slate-800 text-slate-500':'bg-pink-700 text-white'} font-bold py-1 rounded">🎁선물</button>${isRunaway&&!isSpecialWife(m)?`<button onclick="returnRunawayWife()" class="flex-1 py-1 rounded font-black bg-rose-600 text-white">🏠복귀(🚑)</button>`:`<button ${!canPropose?'disabled':''} onclick="propose(${i})" class="flex-1 py-1 rounded font-black ${canPropose?'bg-amber-400 text-slate-950':'bg-slate-800 text-slate-500'}">${propLabel}</button>`}</div></div>`;
+ }).join('')+`</div>${X}`);
+}
+function gift(){
+ if(state.cash<5e6)return alertBox('자금 부족','선물 비용 500만 원이 부족합니다.','🎁');
+ state.cash-=5e6;
+ state.spouseHappiness=Math.min(100,state.spouseHappiness+30);
+ state.stress=Math.max(0,state.stress-15);
+ if(state.wifeGrudge){
+  state.wifeGrudge=false;
+  log('💖 기념일 선물로 아내의 가출 뒤끝(냉전)이 완전히 풀렸습니다!','text-emerald-300 font-black');
+ }else{
+  log('🎁 기념일 선물로 행복도 상승, 스트레스 감소!','text-pink-300 font-bold');
+ }
+ sfxFan();ui();openRomance();
+}
+function blind(){if(state.cash<1e6)return alertBox('비용 부족','소개팅 비용 100만 원이 부족합니다.','⚠️');state.cash-=1e6;const u=state.candidates.filter(c=>!c.met);
+ if(u.length){const p=u[Math.floor(R()*u.length)];p.met=true;p.affection=Math.min(100,p.affection+30);const w=W[p.id];sfxFan();ui();alertBox('새로운 인연!',`${w[0]} [${w[1]}]님과 만났습니다!\n${w[4]}\n${w[5]}`,'💘')}else{state.candidates.forEach(c=>c.affection=Math.min(100,c.affection+15));sfxCoin();ui();alertBox('호감도 상승','모든 인연의 호감도 +15%','💖')}}
+function showScoldAnim(prevId,newId){
+ const pw=W[prevId],nw=W[newId];
+ const curses=['🤬','💢','⚡','🗯️','👋','💔','🔥','😡'];
+ const flyHtml=Array.from({length:10},(_,k)=>`<span class="curse-fly text-2xl" style="animation-delay:${(k*.08).toFixed(2)}s;margin:0 4px">${curses[k%curses.length]}</span>`).join('');
+ modal(`<div class="scold-box text-center border-2 border-rose-500 rounded-xl p-4 bg-gradient-to-b from-rose-950/95 to-slate-950">
+  <div class="my-1">${flyHtml}</div>
+  <div class="text-5xl mb-2">🤬💢👋</div>
+  <h2 class="text-lg font-black text-rose-300 mb-2">⚡ 다른 여자에게 데이트 신청 발각! 욕 바가지 세례! ⚡</h2>
+  <div class="bg-slate-900/95 border border-rose-500/60 rounded-lg p-3 text-left space-y-2 mb-3">
+   <div class="text-rose-200 font-bold">${pw[0]} ${pw[1]}: <span class="text-white">"야!! 이 양다리 사기꾼아!! 나랑 만나면서 이제 와서 ${nw[1].split(' ')[0]}한테 꼬리를 쳐?! 죽고 싶어?! 🤬💢"</span></div>
+   <div class="text-amber-200 font-bold">${nw[0]} ${nw[1]}: <span class="text-white">"어머, ${pw[1].split(' ')[0]}씨 몰래 저한테 데이트 신청하신 거예요? 데이트는 해주겠지만 소문 다 날 줄 아세요! 🗯️⚡"</span></div>
+  </div>
+  <div class="bg-rose-950/80 border border-rose-400 rounded p-2 text-xs font-black text-rose-200 mb-3">
+   💘 ${nw[1].split(' ')[0]}님과 이번 분기 데이트(1/1회)는 완료(호감도 +18)했지만, 욕설 세례로 <span class="text-amber-300 underline">🔥 스트레스 +10 증가!</span> (현재 스트레스: ${state.stress}/100)
+  </div>
+  <button onclick="openRomance()" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-6 py-2 rounded">💦 반성하며 돌아가기</button>
+ </div>`);
+}
+function dateW(i){
+ const specBlocked=(i===9&&state.jenniferDone)||(i===2&&state.haeunDone);
+ if(state.candidates[i].lock>0||specBlocked)return;
+ // 기혼 상태에서는 오직 유하은(2) 또는 제니퍼(9)만 데이트 가능 (단, 이미 유하은/제니퍼와 동거 중이면 불가)
+ if(state.marriedWifeId!==null&&(!isSpecialWife(i)||isSpecialWife(state.marriedWifeId)))return;
+ if(state.dateUsedInQuarter){
+  sfxAlarm();
+  return alertBox('🌹 데이트는 1분기에 한 번만!',`이번 분기에는 이미 데이트(1/1회)를 마쳤습니다!\n3개월 사업 스케줄을 실행해 다음 분기가 되면 다시 데이트를 신청할 수 있습니다.`,'🗓️');
+ }
+ if(state.cash<15e5)return alertBox('비용 부족','데이트 비용 150만 원이 부족합니다.','🌹');
+ state.cash-=15e5;
+ state.dateUsedInQuarter=true;
+ const prevId=state.marriedWifeId!==null?state.marriedWifeId:state.lastDatedId;
+ state.lastDatedId=i;
+ const c=state.candidates[i];
+ c.met=true;
+ if(prevId!==null&&prevId!==undefined&&prevId!==i){
+  c.affection=Math.min(100,c.affection+18);
+  state.stress=cl(state.stress+10,0,100);
+  sfxAlarm();
+  parts('🤬',8);parts('💢',8);
+  ra.icon='🤬';ra.bub='양다리 욕먹는중!';
+  mood('h','panic',4500);
+  if(S3.ok){for(let k=0;k<5;k++)S3.fxAdd(k%2?'🤬':'💢',S3.hero.g.position.x,2.9)}
+  log(`🤬 [양다리 데이트!] ${W[prevId][1].split(' ')[0]} 놔두고 ${W[i][1].split(' ')[0]}에게 데이트 신청(분기 1/1회)! 욕먹고 스트레스 +10!`,'text-rose-400 font-black');
+  ui();
+  if(state.stress>=100){return hospital('양다리 데이트 욕설 충격 및 과로')}
+  return showScoldAnim(prevId,i);
+ }
+ state.stress=Math.max(0,state.stress-10);
+ c.affection=Math.min(100,c.affection+25);
+ sfxCoin();parts('💖',6);
+ log(`🌹 ${W[i][1].split(' ')[0]}님과 설레는 분기 데이트(1/1회 완료)! (호감도 +25, 스트레스 -10)`,'text-pink-300 font-bold');
+ ui();openRomance();
+}
+function propose(i){
+ const c=state.candidates[i],w=W[i],m=state.marriedWifeId;
+ if((i===9&&state.jenniferDone)||(i===2&&state.haeunDone)){
+  sfxAlarm();
+  return alertBox('🚫 재청혼 불가',`${w[1]}님과는 이미 계약 동거가 끝나 다시 청혼할 수 없습니다!`,'🚫');
+ }
+ // 일반 히로인은 미혼(m===null)일 때만 청혼 가능, 유하은(2)·제니퍼(9)는 일반 와이프와 결혼 중(m!==null && !isSpecialWife(m))이어도 청혼 가능!
+ const allowed=(m===null||(isSpecialWife(i)&&!isSpecialWife(m)));
+ if(!c.met||c.affection<60||!allowed||c.lock>0)return;
+ if(state.cash<3e6)return alertBox('비용 부족','반지 비용 300만 원이 필요합니다!','💍');
+ state.cash-=3e6;
+ if(R()>=pMarry(i)&&c.rej<8){
+  c.rej++;c.lock=1;c.affection=Math.max(0,c.affection-5);sfxAlarm();ui();
+  alertBox(`💔 청혼 거절! (누적 ${c.rej}회)`,`${w[0]} ${w[1]}:\n"${w[6][c.rej%2]}"\n\n(💔 이번 분기에는 ${w[1].split(' ')[0]}님과 만날 수 없어요. 한 분기가 지나면 다시 도전할 수 있습니다!)`,'💍');
+ }else{
+  if(isSpecialWife(i)){
+   const prevWife=state.marriedWifeId;
+   if(prevWife!==null&&!isSpecialWife(prevWife)){
+    state.runawayWifeId=prevWife;
+    log(`🏃‍♀️💢 [${w[1]}]님과의 결혼 소식에 현재 와이프 [${W[prevWife][1]}]님이 가출했습니다!`,'text-rose-400 font-black');
+   }
+   state.marriedWifeId=i;
+   state.spouseHappiness=90;
+   state.wifeGrudge=false;
+   const runawayMsg=(prevWife!==null&&!isSpecialWife(prevWife))?`\n\n🏃‍♀️💢 [현재 와이프 가출!]\n${W[prevWife][0]} ${W[prevWife][1]}: "내가 두 눈 시퍼렇게 뜨고 있는데 ${w[1].split(' ')[0]}랑 살림을 차려?! 나 집 나갈 거야!! 나중에 나 돌아올 때 응급실 갈 줄 알아!!"` : '';
+   if(i===2){
+    // 🎻 유하은 결혼 성공: +20턴 영구 증가 & 2분기 동거
+    state.turn+=20;
+    state.specialTurns=2;
+    state.haeunDone=true;
+    sfxFan();parts('🎻',12);parts('⏳',10);ui();
+    log(`🎻⏳ [유하은과 결혼 성공!] 남은 턴이 +20턴 영구 증가했습니다! (현재 남은 턴: ${state.turn}턴)`,'text-purple-300 font-black');
+    return alertBox('🎻 유하은과 결혼 성공! (+20턴 영구 증가!)',`${w[0]} ${w[1]}:\n"${w[7]}"\n\n• ⏳ 결혼 즉시 보상: 남은 턴 [+20턴 영구 증가!] (현재 ${state.turn}턴)\n• 🎻 동거 기간: 2분기 동안 작곡 수익 +40% & 분기 스트레스 -18 (이후 월드투어 출국 및 재청혼 불가)${runawayMsg}`,'🎻');
+   }else{
+    // 🎰 제니퍼 결혼 성공: 8분기 동거 (특허등록 2배, 강화 3배) & 떠날 때 20억 잠적 예고
+    state.specialTurns=8;
+    state.jenniferDone=true;
+    sfxFan();parts('🎰',12);parts('💍',10);ui();
+    log(`🎰 [제니퍼와 결혼 성공!] 8분기 동안 특허등록 확률 2배·강화 확률 3배! (단, 8분기 후 떠날 때 20억 들고 잠적!)`,'text-amber-300 font-black');
+    return alertBox('🎰 제니퍼와 결혼 성공! (8분기 동거)',`${w[0]} ${w[1]}:\n"${w[7]}"\n\n• ⏳ 동거 기간: 8분기 (이후 재청혼 불가)\n• 📜 특허 정식등록 확률 2배 증가! (현재 ${patentProb().toFixed(1)}%)\n• ⚡ 특허 강화 확률 3배 증가! (현재 ${upgradeProb().toFixed(1)}%)\n• ⚠️ 주의: 8분기가 끝나고 떠날 때 [20억 원]을 가지고 잠적합니다!${runawayMsg}`,'🎰');
+   }
+  }
+  state.marriedWifeId=i;state.spouseHappiness=85;state.wifeGrudge=false;sfxFan();parts('💍',12);ui();
+  alertBox('🎊 결혼 골인!',`${c.rej}번의 거절 끝에 성공!\n\n${w[0]} ${w[1]}:\n"${w[7]}"`,'👰');
+ }
+}
+// ===== 3개월 실행 엔진 =====
+$('btnRunQueue').onclick=async()=>{
+ if(busy)return;
+ if(state.queue.includes(null))return alertBox('스케줄 미완성','3개월 슬롯을 모두 채워주세요!','🗓️');
+ for(let m=0;m<3;m++){
+  const s=SC[state.queue[m]],lw=lockWhy(s);
+  if(lw){
+   sfxAlarm();
+   state.queue[m]=null;
+   slots();
+   return alertBox('🔒 잠긴 세부 스케줄 실행 불가!',`${m+1}개월차에 예약된 [${s.name}] 스케줄이 잠겨 있어 실행할 수 없습니다.\n\n• 해제 조건: ${lw}\n• [🎓교육] 탭에서 해당 분야 교육을 먼저 수강해 주세요!`,'🔒');
+  }
+ }
+ const f=SC[state.queue[0]],firstCost=(state.marriedWifeId===8&&f.cat===6)?0:f.cost;
+ if(state.cash<firstCost){sfxAlarm();return alertBox('초기 사업자금 부족!',`1개월차 [${f.name}] 비용(${won(firstCost)})이 부족합니다!\n무료 기초 스케줄(🔧스마트폰 수리, 🍽️동네 카페, 🎼Suno 작곡)을 넣거나 [🏦대출]을 이용하세요!`,'💸')}
+ state.lastQueue=[...state.queue];busy=true;S3.begin();const ov=$('monthlyProgressOverlay'),bar=$('animMonthBar');ov.classList.remove('hidden');
+ const am=state.age>=37?1.3:state.age>=32?1.15:1;
+ state.edu=state.edu||initEdu();
+ for(let m=0;m<3;m++){
+  const wasAiOk=isAiUnlocked();
+  const it=SC[state.queue[m]];ra.icon=it.icon;ra.bub=it.name;S3.month(it,m);$('animActionTitle').textContent=`${it.icon} ${it.name}`;$('animMonthLabel').textContent=`${m+1}개월차`;bar.style.width=`${(m+1)/3*100}%`;
+  const L=lvOf((state.lv=state.lv||{})[it.id]||0),wf=state.marriedWifeId;
+  const actualCost=(wf===8&&it.cat===6)?0:Math.floor(it.cost*(1+.08*L));
+  state.cash-=actualCost;if(state.cash<0){state.debt+=-state.cash;state.cash=0;log('🏦 현금 부족 → 마이너스 통장 자동 대출','text-rose-300')}
+  let mu=1;if(wf===1&&(it.cat===1||it.cat===2))mu=1.35;if(wf===2&&it.cat===8)mu=1.4;if(wf===3&&it.cat===5)mu=1.4;if(wf===4&&it.cat===3)mu=1.35;if(wf===5&&it.cat===7)mu=1.35;if(wf===6&&it.cat===10)mu=1.3;if(wf===7&&it.cat===4)mu=1.35;if(wf===8)mu=it.cat===6?1.35:.9;if(wf===9&&it.cat===9)mu=1.35;if(it.cat===9&&state.ownedItems.includes('bloomberg'))mu*=1.25;
+  if(it.eduKey)mu*=1+((state.edu[it.eduKey]||0)*.003);
+  mu*=1+.3*L;
+  if(it.gain){state.cash+=Math.floor(it.gain*mu);parts('🪙',4)}if(it.pas)state.passive+=Math.floor(it.pas*mu);state.catRuns[it.cat]=(state.catRuns[it.cat]||0)+1;
+  if(it.edu){
+   const before=state.edu[it.edu]||0;
+   const eg=Math.round(it.eduGain*(1+.12*L)*(wf===8?1.5:1));
+   state.edu[it.edu]=Math.min(999,before+eg);
+   const after=state.edu[it.edu];
+   parts('🎓',6);
+   const unlockedNow=SC.filter(s=>s.cat!==10&&s.eduKey===it.edu&&s.reqEdu>before&&s.reqEdu<=after);
+   if(unlockedNow.length){
+    sfxFan();
+    log(`🔓 [${EDU_META[it.edu].name} ${after}점] ${unlockedNow.map(u=>u.name).join(', ')} 잠금 해제!`,'text-emerald-300 font-black');
+   }else{
+    log(`🎓 [${it.name}] 수강 완료! ${EDU_META[it.edu].name} +${eg} (현재 ${after}점)`,'text-sky-300 font-bold');
+   }
+  }else if(it.eduKey){
+   const before=state.edu[it.eduKey]||0,after=Math.min(999,before+5);
+   state.edu[it.eduKey]=after;
+   const unlockedNow=SC.filter(s=>s.cat!==10&&s.eduKey===it.eduKey&&s.reqEdu>before&&s.reqEdu<=after);
+   if(unlockedNow.length)log(`🔓 실전 경험으로 [${unlockedNow.map(u=>u.name).join(', ')}] 잠금 해제!`,'text-emerald-300 font-bold');
+  }
+  {const nr=(state.lv[it.id]=(state.lv[it.id]||0)+1);if(lvOf(nr)>L)log(`⬆️ [${it.name}] Lv.${lvOf(nr)} 달성! 수익·능력 상승`,'text-amber-300 font-bold')}
+  if(it.ticket){state.patentTickets+=it.ticket;state.lastRoyalty=it.roy||2e6;parts('🎫',6);log(`🎫 [${it.name}] 완수! 특허 출원권 티켓 +${it.ticket}장 (다음 등록심사 필요티켓: ${reqPatentTickets()}장)`,'text-sky-300 font-bold')}
+  for(const[k,v]of Object.entries(it.st)){if(k==='stress'){let d=v;if(d>0){d=Math.floor(d*am*Math.max(.7,1+.07*(it.diff-1)-.05*L));if(state.ownedItems.includes('espresso'))d=Math.floor(d*.75)}else if(state.ownedItems.includes('cello'))d=Math.floor(d*1.35);state.stress=cl(state.stress+d,0,100)}else{const vv=Math.round(v*(1+.12*L));state[k]=Math.min(k==='net'?1999:999,state[k]+(k==='tech'&&state.ownedItems.includes('ai_pc')?Math.floor(vv*1.3):vv))}}
+  if(!wasAiOk&&isAiUnlocked()){
+   sfxFan();parts('🤖',10);
+   log('🔓 [🤖AI 스케줄 해금!] 수리·작곡·인맥·사업·특허교육 30점 & 기술력 300·사업수완 300 달성으로 상단 AI 탭이 열렸습니다!','text-cyan-300 font-black');
+  }
+  if(state.stress>=100){ov.classList.add('hidden');bar.style.width='0%';hospital(it.name);finishQuarter(true);return}
+  if(state.marriedWifeId===null&&R()<.45){let t=W.findIndex(w=>w[3]===it.cat);if(t<0)t=Math.floor(R()*10);const c=state.candidates[t];c.met=true;c.affection=Math.min(100,c.affection+15);log(`💘 [${W[t][1]}]님과 마주쳐 호감도 ${c.affection}%`,'text-pink-300 font-bold')}
+  sfxCoin();ui();board();S3.done(it);await sleep(fastRun?220:1000)}
+ ov.classList.add('hidden');bar.style.width='0%';S3.end();finishQuarter(false)};
+function finishQuarter(hosp){
+ const q=hosp?[]:[...state.lastQueue];
+ state.queue=[null,null,null];
+ state.dateUsedInQuarter=false;
+ state.patentUsedInQuarter=false;
+ state.patentUpUsedInQuarter=false;
+ slots();
+ state.candidates.forEach(c=>{if(c.lock>0)c.lock--});state.patents.forEach(p=>{if(p.mature>0)p.mature--});let inc=state.passive;if(state.ownedItems.includes('gold_safe')&&state.cash>0)inc+=Math.floor(state.cash*.02);
+ if(state.debt>0){const i=Math.floor(state.debt*.05);state.cash-=i;log(`🏦 대출 이자 -${won(i)}`,'text-rose-300')}
+ let specialLeftType=null; // 'jennifer' | 'haeun'
+ if(state.marriedWifeId!==null&&!hosp){
+  const w=state.marriedWifeId;
+  const drop=state.wifeGrudge?12:4;
+  state.spouseHappiness=Math.max(0,state.spouseHappiness-drop);
+  if(state.wifeGrudge){
+   state.stress=Math.min(100,state.stress+8);
+   log(`💢 [${W[w][1].split(' ')[0]} 뒤끝 냉전 중] 행복도 -12, 스트레스 +8 (기념일 선물이나 명품 선물로 풀어주세요!)`,'text-rose-300 font-bold');
+  }
+  if(w===0){state.net+=15;state.cash-=12e6}else if(w===1){inc+=4e6;state.stress=Math.min(100,state.stress+10)}else if(w===2){state.stress=Math.max(0,state.stress-18);state.cash-=6e6}else if(w===3)state.tech+=10;
+  else if(w===4){state.rivalCash=Math.max(5e6,state.rivalCash-15e6);state.stress=Math.min(100,state.stress+12);state.cash-=5e6}else if(w===5){inc+=8e6;state.cash-=15e6}else if(w===6)state.tech+=16;else if(w===7){state.net+=18;state.cash-=8e6;state.tech=Math.max(0,state.tech-5)}
+  else if(w===8)state.stress=Math.max(0,state.stress-28);else if(w===9){state.cash+=R()<.5?3e7:-2e7}
+  if(state.stress>=100)hospital('배우자 갈등 및 과로 누적');
+  if(isSpecialWife(w)){
+   state.specialTurns=(state.specialTurns||1)-1;
+   if(state.specialTurns<=0){
+    state.marriedWifeId=null;
+    specialLeftType=(w===9)?'jennifer':'haeun';
+   }
+  }else if(state.spouseHappiness<=10){
+   const al=Math.max(1e7,Math.floor(state.cash*.2));state.cash=Math.max(0,state.cash-al);state.marriedWifeId=null;state.wifeGrudge=false;sfxAlarm();alertBox('💔 이혼 및 위자료 청구!',`${W[w][1]}님이 이혼 소송을 제기했습니다!\n위자료 -${won(al)}을 지급하고 다시 싱글이 되었습니다.`,'💔');
+  }
+ }
+ state.cash+=inc;if(state.cash<0){state.debt+=-state.cash;state.cash=0}state.rivalCash+=Math.floor(R()*25e6)+12e6;if(!hosp)log(`분기 정산 완료 (패시브 +${won(inc)})`,'text-emerald-300 font-bold');
+ // 🎰 제니퍼 8분기 종료 시 20억 원 가지고 잠적 처리!
+ if(specialLeftType==='jennifer'){
+  const steal=2e9; // 20억 원
+  state.cash-=steal;
+  if(state.cash<0){state.debt+=-state.cash;state.cash=0}
+  sfxAlarm();parts('💸',12);mood('h','panic',5000);
+  log('🎰💸 [제니퍼 20억 잠적!!] 8분기 동거가 끝나자 제니퍼가 20억 원을 챙겨 월스트리트로 잠적했습니다! (재청혼 불가)','text-rose-400 font-black');
+ }else if(specialLeftType==='haeun'){
+  log('🎻✈️ [유하은 월드투어 출국] 유하은과의 2분기 동거가 끝나 유럽 월드투어를 떠났습니다! (+20턴 영구 증가 효과는 계속 유지됩니다)','text-purple-300 font-black');
+ }
+ q.forEach(id=>{const it=SC[id];if(it&&it.ai){state.aiRuns[it.ai]=(state.aiRuns[it.ai]||0)+1;if(state.aiRuns[it.ai]>1)state.passive+=Math.floor(it.pas*.2)}});
+ if(!state.aiSynergy&&AI.every(a=>state.aiRuns[a[0]])){state.aiSynergy=true;state.passive+=3e6;state.tech+=10;state.biz+=10;alertBox('🤖 무자본 AI 6대 사업 완성!','유튜브·블로그·전자책·SaaS·대행·POD를 모두 가동했습니다.\n시너지: 분기 패시브 +300만, 기술력·사업수완 +10','🤖')}
+ state.turn--;state.quarter++;if(state.quarter>4){state.quarter=1;state.age++}busy=false;ui();board();
+ if(state.turn<=0||state.cash-state.debt>=GOAL)return ending();
+ // 제니퍼 또는 유하은이 떠났을 때 모달 안내 & 가출한 와이프 복귀->응급실 연동
+ if(specialLeftType==='jennifer'){
+  if(state.runawayWifeId!==null&&state.runawayWifeId!==undefined){
+   const rw=W[state.runawayWifeId];
+   modal(`<div class="scold-box text-center"><div class="text-5xl mb-2">🎰💸 ➔ 🏠💥</div><h2 class="text-lg font-black text-rose-300 mb-2">제니퍼 8분기 종료 · 20억 원 들고 잠적!!</h2><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-rose-500/60 text-left whitespace-pre-line">🎰 제니퍼: "달링~ 8분기 동안 즐거웠어! 약속대로 내 위자료 20억 원은 계좌에서 깔끔하게 인출해 갈게~ 다신 찾지 마, 바이바이! 💸✈️"\n\n• 💸 제니퍼가 20억 원을 들고 잠적했습니다! (부족분은 대출 부채로 전환)\n• 🏠 제니퍼가 사라지자 가출했던 와이프 [${rw[0]} ${rw[1]}]님이 돌아올 수 있게 되었습니다! (복귀 시 주인공은 응급실로 실려 갑니다!)</p><div class="flex gap-2 justify-center"><button onclick="returnRunawayWife()" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-5 py-2 rounded">🏠 가출한 와이프 지금 복귀 (🚑응급실행)</button><button onclick="closeModal()" class="bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded">인연센터에서 나중에 복귀</button></div></div>`);
+  }else{
+   alertBox('🎰💸 제니퍼 8분기 만기 — 20억 원 들고 잠적!!','🎰 제니퍼: "달링~ 8분기 계약 끝! 20억 원은 내가 월스트리트 투자금으로 잘 쓸게~ 바이바이!"\n\n• 자금 -20억 원 차감 (현금 부족분은 자동 대출 전환)\n• 제니퍼에게는 다시 청혼할 수 없습니다.','💸');
+  }
+ }else if(specialLeftType==='haeun'){
+  if(state.runawayWifeId!==null&&state.runawayWifeId!==undefined){
+   const rw=W[state.runawayWifeId];
+   modal(`<div class="text-center"><div class="text-5xl mb-2">🎻✈️ ➔ 🏠💥</div><h2 class="text-lg font-black text-purple-300 mb-2">유하은 월드투어 출국 & 가출한 와이프 복귀 가능!</h2><p class="text-slate-200 leading-relaxed mb-4 bg-slate-900 p-3 rounded border border-purple-500/60 text-left whitespace-pre-line">🎻 유하은: "당신과 함께한 시간 덕분에 불후의 교향곡을 완성했어요. 선물해 드린 +20턴의 시간으로 꼭 꿈을 이루세요!"\n\n• 유하은이 떠나자 가출했던 와이프 [${rw[0]} ${rw[1]}]님이 돌아올 수 있게 되었습니다! (복귀 시 주인공은 응급실로 실려 갑니다!)</p><div class="flex gap-2 justify-center"><button onclick="returnRunawayWife()" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-5 py-2 rounded">🏠 가출한 와이프 지금 복귀 (🚑응급실행)</button><button onclick="closeModal()" class="bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded">인연센터에서 나중에 복귀</button></div></div>`);
+  }else{
+   alertBox('🎻✈️ 유하은 월드투어 출국','유하은님이 2분기 동거를 마치고 유럽 월드투어를 떠났습니다.\n(결혼 보너스로 받은 +20턴 영구 증가 효과는 그대로 유지됩니다!)','🎻');
+  }
+ }
+}
+function ending(){const n=state.cash-state.debt,m=state.marriedWifeId!==null,cr=state.catRuns,top=Object.keys(cr).sort((a,b)=>cr[b]-cr[a])[0],t=+top;let i=9;
+ if(n>=GOAL){i=(m&&state.reconciled)?10:(m?0:1)}else if(state.aiSynergy&&t===10)i=8;else if(t===9&&state.biz>=250)i=2;else if(t===7&&n>=5e9)i=3;else if(t===8&&state.art>=250)i=4;else if((t===1||t===2)&&state.tech>=250)i=5;else if(t===3&&state.net>=800)i=6;else if(n>=1e9)i=7;
+ const al=ls('pm44_album',[]);if(!al.includes(i))al.push(i);lset('pm44_album',al);const hof=ls('pm44_hof',[]);hof.push({i:END[i][0],n:END[i][1],v:n,r:state.ngPlusCount});hof.sort((a,b)=>b.v-a.v);lset('pm44_hof',hof.slice(0,8));sfxFan();
+ alertBox(`${END[i][0]} ${END[i][1]}`,`${state.age}세 최종 엔딩!\n배우자: ${m?W[state.marriedWifeId][1]:'독신'}\n최종 순자산: ${won(n)}\n[🏆전당·계승]에서 가보를 물려받아 2회차를 시작할 수 있습니다!`,END[i][0])}
+// ===== 저장 / UI =====
+function saveGameData(){lset('pm44_save',state);alertBox('저장 완료','저장되었습니다!','💾')}
+function loadGameData(){const d=ls('pm44_save',null);if(!d)return alertBox('저장 없음','저장된 데이터가 없습니다.','📂');state=d;state.aiRuns=state.aiRuns||{};state.catRuns=state.catRuns||{};state.inv=state.inv||{};state.lv=state.lv||{};state.edu=Object.assign(initEdu(),state.edu||{});state.dateUsedInQuarter=!!state.dateUsedInQuarter;state.patentUsedInQuarter=!!state.patentUsedInQuarter;state.patentUpUsedInQuarter=!!state.patentUpUsedInQuarter;state.patentRegCount=state.patentRegCount||0;state.specialTurns=state.specialTurns||0;state.jenniferDone=!!state.jenniferDone;state.haeunDone=!!state.haeunDone;state.wifeGrudge=!!state.wifeGrudge;state.reconciled=!!state.reconciled;if(state.runawayWifeId===undefined)state.runawayWifeId=null;if(state.lastDatedId===undefined)state.lastDatedId=null;state.queue=(state.queue||[null,null,null]).map(id=>(id!==null&&SC[id]&&!lockWhy(SC[id]))?id:null);busy=false;ui();board();slots()}
+function resetGameData(){if(!confirm('25세(40턴 제한)부터 다시 시작할까요?'))return;state=init();GOAL=1e10;busy=false;ui();board();slots()}
+function brief(){
+ const s=state,r=s.aiRuns,done=AI.filter(a=>r[a[0]]).length,aiOk=isAiUnlocked();
+ let t;
+ if(s.stress>=80)t=`주인님, 스트레스가 ${s.stress}입니다! 🏖️힐링으로 쉬어 가십시오. 입원하면 -1,500만 원입니다.`;
+ else if(s.marriedWifeId===9)t=`🎰 제니퍼와 동거 중(${s.specialTurns}분기 남음)! 특허 등록 2배(${patentProb().toFixed(1)}%)·강화 3배(${upgradeProb().toFixed(1)}%)일 때 특허청을 돌리세요! (종료 시 20억 잠적 주의!)`;
+ else if(s.marriedWifeId===2)t=`🎻 유하은과 동거 중(${s.specialTurns}분기 남음 · +20턴 증가 완료)! 작곡 수익 +40% 및 분기 스트레스 -18 혜택을 누리세요!`;
+ else if(s.wifeGrudge)t=`💢 복귀한 아내가 뒤끝(냉전) 상태입니다! 💍인연센터에서 기념일 선물(-500만)이나 명품 선물을 줘야 냉전이 풀립니다!`;
+ else if(s.runawayWifeId!==null&&s.marriedWifeId===null)t=`🏃‍♀️ 가출했던 아내(${W[s.runawayWifeId][1].split(' ')[0]})가 돌아올 수 있습니다! (인연센터에서 복귀 시 응급실행 주의!)`;
+ else if(!aiOk&&s.turn%2===0){
+  const rem=getAiStatus().filter(x=>!x.ok).map(x=>`${x.label}(${x.cur}/${x.req})`).join(', ');
+  t=`🤖AI 잠금해제까지 남은 조건: ${rem}`;
+ }
+ else if(s.patentTickets>=reqPatentTickets()&&!s.patentUsedInQuarter)t=`🎫티켓 ${s.patentTickets}장 보유! 이번 분기 📜특허청 정식등록(필요 티켓 ${reqPatentTickets()}장, 확률 ${patentProb().toFixed(1)}%)에 도전하세요!`;
+ else if(aiOk&&done<6){const n=AI.find(a=>!r[a[0]]);t=`🤖AI 사업 해금 완료! (${done}/6 가동 중) 다음 추천: ${n[1]} ${n[2]}`}
+ else{t=`25세 청년창업(기본 40턴)! 🎻유하은과 결혼하면 +20턴이 영구 증가하고, 🎰제니퍼와 결혼하면 8분기 동안 특허 확률이 폭증합니다!`}
+ $('butlerDialogue').textContent=`"${t}"`;$('taxAuditRiskText').textContent=`세무위험: ${s.taxAuditRisk}%`;$('aiProgress').innerHTML=AI.map(a=>`<span title="${a[2]}" style="opacity:${r[a[0]]?1:.25}">${a[1]}</span>`).join('')
+}
+function ui(){const s=state,n=s.cash-s.debt;s.edu=s.edu||initEdu();['tech','biz','art'].forEach(k=>s[k]=Math.min(999,s[k]));s.net=Math.min(1999,s.net);$('topAge').textContent=`${s.age}세 ${s.quarter}분기`;$('topTurn').textContent=`(남은 ${s.turn}턴)`;$('topCash').textContent=won(s.cash);$('topDebt').textContent=won(s.debt);$('topPassive').textContent='+'+won(s.passive);$('rivalStatusText').textContent=`알렉스: ${won(s.rivalCash)}`;
+ $('patentTicketBadge').textContent=`${s.patentTickets}장(요구:${reqPatentTickets()})`;
+ const ab=$('agingBadge');if(s.age>=37){ab.textContent='완숙기(피로x1.3)';ab.className='text-[9.5px] px-1 rounded bg-rose-950 text-rose-300'}else if(s.age>=32){ab.textContent='도약기(피로x1.15)';ab.className='text-[9.5px] px-1 rounded bg-amber-950 text-amber-300'}else{ab.textContent='청년기(x1.0)';ab.className='text-[9.5px] px-1 rounded bg-emerald-950 text-emerald-300'}
+ $('roomFrame').classList.toggle('crisis-alert',s.stress>=80);
+ if(s.marriedWifeId!==null){const w=W[s.marriedWifeId];$('topRomanceBtnText').textContent='배우자:'+w[1].split(' ')[0]+(isSpecialWife(s.marriedWifeId)?`(${s.specialTurns}Q)`:s.wifeGrudge?'(💢)':'');$('spouseStatusBadge').textContent=isSpecialWife(s.marriedWifeId)?`${w[0]} 동거(${s.specialTurns}분기)`:`${w[0]} 행복 ${s.spouseHappiness}%${s.wifeGrudge?'💢':''}`}else{const c=s.candidates.filter(x=>x.met).length;$('topRomanceBtnText').textContent=s.runawayWifeId!==null?'🏃‍♀️와이프가출':`인연·청혼(${c}/10)`;$('spouseStatusBadge').textContent=s.runawayWifeId!==null?`🏃‍♀️ ${W[s.runawayWifeId][1].split(' ')[0]} 가출중`:`💔 싱글 (${c}/10)`}
+ const pct=cl(n/GOAL*100,0,100),B=(l,v,c,mx=500)=>`<div><div class="flex justify-between"><span class="${c[0]} font-bold">${l}</span><span class="font-bold">${v}</span></div><div class="bar"><i style="width:${Math.min(100,v/mx*100)}%;background:${c[1]}"></i></div></div>`;
+ const eduHtml=Object.entries(EDU_META).map(([k,m])=>{const v=s.edu[k]||0;return `<div class="bg-slate-900/90 border border-slate-800 px-1.5 py-0.5 rounded flex justify-between items-center"><span class="text-[9.5px] text-slate-300">${m.icon}${m.name}</span><b class="text-[9.5px]" style="color:${m.color}">${v}점</b></div>`}).join('');
+ $('stats').innerHTML=B('💡 기술력(AI해금:300)',s.tech,['text-sky-300','#38bdf8'])+B('📈 사업수완(AI해금:300)',s.biz,['text-emerald-300','#34d399'])+B('🎨 감성예술',s.art,['text-purple-300','#c084fc'])+B('🤝 인맥(최대1999)',s.net,['text-amber-300','#fbbf24'],1999)
+  +B('🔥 스트레스(100=입원!)',s.stress,['text-rose-400','#f43f5e'],100)+`<div id="goalBarWrap"><div class="flex justify-between"><span class="text-amber-300 font-bold">${s.ngPlusCount>1?`🏆 ${s.ngPlusCount}회차(1,000억)`:'🏆 100억 달성률'}</span><span class="font-bold">${pct.toFixed(1)}%</span></div><div class="bar"><i style="width:${pct}%;background:#fbbf24"></i></div></div>`
+  +`<div class="col-span-2 mt-1 pt-1 border-t border-slate-800"><div class="flex justify-between text-[9.5px] font-black text-emerald-300 mb-1"><span>🎓 8대 교육 고유 능력치</span><span class="text-amber-300">등록:${patentProb().toFixed(1)}% · 강화:${upgradeProb().toFixed(1)}%</span></div><div class="grid grid-cols-4 gap-1">${eduHtml}</div></div>`;
+ $('bottomLogTicker').innerHTML=s.logs.slice(0,2).join('');slots();brief()}
+board();ui();
+setTimeout(()=>{S3.init();setLeftTab(0)},150);
+(()=>{const W2=(n,f)=>{const o=globalThis[n];if(typeof o!=='function')return;globalThis[n]=function(...a){return f(o,...a)}};
+ W2('hospital',(o,s,m)=>{mood('h','sick',4000);if(state.marriedWifeId!==null)mood('w','shock',4000);S3.end();return o(s,m)});
+ W2('propose',(o,i)=>{const m0=state.marriedWifeId,r0=state.candidates[i].rej,r=o(i);if(state.marriedWifeId!==null&&state.marriedWifeId!==m0){mood('h','love',6000);mood('w','love',6000)}else if(state.candidates[i].rej>r0)mood('h','sad',3500);return r});
+ W2('sendGift',(o,hi)=>{const n=gsel.length,r=o(hi);if(n)mood(state.marriedWifeId===hi?'w':'h','love',3500);return r});
+ W2('gift',o=>{const r=o();mood('w','love',4000);return r});
+})();
+</script></body></html>
